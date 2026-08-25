@@ -6,7 +6,7 @@ import numpy as np
 from laser.carla_agents.vehicle_decision_interpreter import VehicleDecisionInterpreter
 from laser.laser_agents import Agent, spawn_actor_by_script
 
-from team_code.interfuser_agent import InterfuserAgent
+import os
 
 from agents.navigation.local_planner import RoadOption
 from srunner.scenariomanager.carla_data_provider import CarlaDataProvider
@@ -47,7 +47,19 @@ class TargetVehicle(Agent):
                                                     carla.Rotation(pitch=-90)))
 
         # Set up the user's agent, and the timer to avoid freezing the simulation
-        self.agent_instance = InterfuserAgent('leaderboard/team_code/interfuser_config.py')
+        ego = os.environ.get("LASER_EGO", "interfuser").lower()
+        if ego == "interfuser":
+            from team_code.interfuser_agent import InterfuserAgent
+            self.agent_instance = InterfuserAgent('leaderboard/team_code/interfuser_config.py')
+        elif ego == "transfuser":
+            from submission_agent import HybridAgent
+            ckpt = os.environ.get(
+                "TRANSFUSER_CKPT",
+                os.path.expanduser("~/scratch/transfuser/model_ckpt/models_2022/transfuser"),
+            )
+            self.agent_instance = HybridAgent(ckpt)
+        else:
+            raise ValueError(f"Unknown LASER_EGO={ego}")
         # Set target location
 
         init_state = agent_script['init_state']

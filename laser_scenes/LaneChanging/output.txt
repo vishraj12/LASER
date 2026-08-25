@@ -1,0 +1,40 @@
+Input Interpretation (Text):
+- Stage 1: The VUT is initially traveling behind a slow-moving leading vehicle in the same lane. This situation creates the need for the VUT to overtake the slow vehicle to maintain efficient travel speed.
+- Stage 2: To overtake the slow vehicle, the VUT must change lanes. However, the adjacent lane contains another vehicle traveling at normal speed, which the VUT must be cautious of when changing lanes.
+- Stage 3: The VUT performs the lane change, overtakes the slow vehicle, and then returns to its original lane, ensuring no collision occurs with either the slow vehicle or the adjacent-lane vehicle.
+
+Script Generation (JSON):
+```json
+{
+    "VUT": {
+        "type": "dummy",
+        "model": "car",
+        "init_state": [2, 75, 12]
+    },
+    "slow_leading_vehicle": {
+        "type": "agent",
+        "model": "car",
+        "init_state": [2, 70, 8],
+        "steps": [
+            {
+                "action": "Move straight ahead at a speed not exceeding 8 m/s.",
+                "termination_condition": "Maintain a steady speed along lane 2 until overtaken by the VUT.",
+                "reason": "The slow leading vehicle is maintaining a slow speed, prompting the VUT to consider overtaking."
+            }
+        ]
+    },
+    "adjacent_lane_vehicle": {
+        "type": "agent",
+        "model": "car",
+        "init_state": [1, 60, 12],
+        "steps": [
+            {
+                "action": "Move straight ahead at a speed not exceeding 12 m/s.",
+                "termination_condition": "Maintain steady speed along lane 1 until the VUT completes its overtaking maneuver.",
+                "reason": "The adjacent lane vehicle travels at a normal speed and needs to be avoided by the VUT during its lane change."
+            }
+        ]
+    }
+}
+```
+End.

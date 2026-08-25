@@ -1,5 +1,6 @@
 from typing import TypedDict, Literal, Type
 import asyncio
+import math
 
 import carla
 from laser.sensor import CollisionSensor
@@ -52,8 +53,13 @@ def get_type(script):
 
 def get_init_state(world, lane_wps, agent_script):
     init_state = agent_script['init_state']
-    l, x = init_state[0] - 1, abs(init_state[1])
-    wp = handle_list(lane_wps[l].previous(x))
+    l, raw_x = init_state[0] - 1, init_state[1]
+    x = abs(raw_x)
+    # Positive distance = previous(x), negative = next(x).
+    # Same carriageway: negative places actor ahead of anchor toward ego travel.
+    # Opposite carriageway: positive places oncoming upstream so it drives toward ego.
+    base = lane_wps[l]
+    wp = handle_list(base.next(x) if raw_x < 0 else base.previous(x))
     
     transform = wp.transform
 
@@ -74,7 +80,10 @@ def spawn_actor_by_script(world, agent_script, lane_wps, role_name):
 
     assert carla_actor is not None
     carla_actor.set_target_velocity(init_velocity)
-    print(f"location: {agent_script['init_state']}\n speed: {carla_actor.get_velocity()}")
+    loc = transform.location
+    print(f"location: {agent_script['init_state']} -> world ({loc.x:.1f}, {loc.y:.1f}, {loc.z:.1f}) "
+          f"road={init_wp.road_id} lane={init_wp.lane_id} yaw={transform.rotation.yaw:.1f}")
+    print(f" speed: {carla_actor.get_velocity()}")
 
     return carla_actor, init_wp, init_velocity
 
@@ -108,14 +117,49 @@ class Agent:
         self.stride = 1
 
         self.collision_sensor = CollisionSensor(queue, self)
+        self._trigger = agent_script.get('trigger')
+        self._trigger_released = self._trigger is None
 
     
     def init_after_carla_tick(self):
         self._decision_interpreter_inst = self._decision_interpreter(self.carla_actor, self.driving_lane_num, self.lane_id2lane_num, self.init_wp, self.init_velocity.length() * 3.6)
         self._llm_agent_inst = self._llm_agent(self.driving_lane_num, self._decision_interpreter_inst, self._llm, self._script['steps'], self)
 
+    def _triggered_decisions(self):
+        trigger = self._trigger
+        ego = self.agent_manager._target_vehicle[0].carla_actor
+        ego_loc = ego.get_location()
+        point = trigger['point']
+        dist = math.hypot(ego_loc.x - point[0], ego_loc.y - point[1])
+        if dist > trigger['distance']:
+            return {
+                'current_step_number': 1,
+                'lane_change_direction': 'FOLLOW LANE',
+                'lane_change_delay': 0,
+                'target_speed': 0,
+            }
+        self._trigger_released = True
+        print(f"{self.name}: trigger released (ego {dist:.1f}m from conflict)")
+        return {
+            'current_step_number': 1,
+            'lane_change_direction': 'FOLLOW LANE',
+            'lane_change_delay': 0,
+            'target_speed': trigger.get('release_speed', 10),
+        }
+
     async def get_decisions(self, sensor_data):
-        decisions = await self._llm_agent_inst.get_decisions(sensor_data)
+        if self._trigger:
+            if not self._trigger_released:
+                decisions = self._triggered_decisions()
+            else:
+                decisions = {
+                    'current_step_number': 1,
+                    'lane_change_direction': 'FOLLOW LANE',
+                    'lane_change_delay': 0,
+                    'target_speed': self._trigger.get('release_speed', 10),
+                }
+        else:
+            decisions = await self._llm_agent_inst.get_decisions(sensor_data)
         print(f"{self.name} at {self.get_self_obs_info()}:")
         print(f"LLM decision: {decisions}")
         return decisions
@@ -145,7 +189,11 @@ class Agent:
     
     def get_self_obs_info(self):
         lane_id, transform, speed, acceleration = self._decision_interpreter_inst.get_self_obs_info()
-        lane_num = self.lane_id2lane_num[lane_id]
+        if lane_id not in self.lane_id2lane_num:
+            print(f'warning: unknown carla lane_id={lane_id}, known={self.lane_id2lane_num}')
+            lane_num = next(iter(self.lane_id2lane_num.values()), 1)
+        else:
+            lane_num = self.lane_id2lane_num[lane_id]
         
         lane_wp = self.lane_wps[0]
         transform_wp = lane_wp.transform

@@ -51,7 +51,15 @@ class ScriptWriter:
         self.output = chain.invoke({})
         self.script = self.output.content
         self.sub_scripts = self.post_process(self.output.content)
-        self.usage_metadata = self.output.usage_metadata
+        usage_metadata = getattr(self.output, 'usage_metadata', None)
+        if not usage_metadata:
+            token_usage = getattr(self.output, 'response_metadata', {}).get('token_usage', {})
+            usage_metadata = {
+                'input_tokens': token_usage.get('prompt_tokens', 0),
+                'output_tokens': token_usage.get('completion_tokens', 0),
+                'total_tokens': token_usage.get('total_tokens', 0),
+            }
+        self.usage_metadata = usage_metadata
 
         return self.sub_scripts
 

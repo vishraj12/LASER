@@ -21,6 +21,67 @@ def get_wp(x, y, z):
     global carla_map
     return carla_map.get_waypoint(carla.Location(x, y, z), project_to_road=True, lane_type=(carla.LaneType.Driving | carla.LaneType.Sidewalk))
 
+
+def find_opposite_driving_wp(wp):
+    """Walk left/right until a Driving lane with opposite lane_id sign."""
+    for starter in (wp.get_left_lane(), wp.get_right_lane()):
+        cur = starter
+        for _ in range(6):
+            if cur is None:
+                break
+            if cur.lane_type == carla.LaneType.Driving and cur.lane_id * wp.lane_id < 0:
+                return cur
+            # keep walking across same-direction lanes
+            nxt = cur.get_left_lane() if starter == wp.get_left_lane() else cur.get_right_lane()
+            if nxt is None:
+                nxt = cur.get_right_lane() if starter == wp.get_left_lane() else cur.get_left_lane()
+            cur = nxt
+    return None
+
+
+def setup_junction189_lights(world, ego_wp, cross_wp):
+    """Freeze lights: ego approach green, crossing approach red (SafeBench red-light)."""
+    world.freeze_all_traffic_lights(True)
+
+    def best_light_for_approach(approach_wp, max_dist=40.0):
+        best = None
+        best_d = max_dist
+        ax = approach_wp.transform.location.x
+        ay = approach_wp.transform.location.y
+        for tl in world.get_actors().filter('traffic.traffic_light*'):
+            try:
+                stop_wps = tl.get_stop_waypoints()
+            except Exception:
+                continue
+            for sw in stop_wps or []:
+                # Same travel direction and near the approach.
+                yaw_d = abs((sw.transform.rotation.yaw - approach_wp.transform.rotation.yaw + 180) % 360 - 180)
+                if yaw_d > 45.0:
+                    continue
+                d = ((sw.transform.location.x - ax) ** 2 + (sw.transform.location.y - ay) ** 2) ** 0.5
+                if d < best_d:
+                    best_d = d
+                    best = tl
+        return best
+
+    ego_light = best_light_for_approach(ego_wp)
+    cross_light = best_light_for_approach(cross_wp)
+
+    for tl in world.get_actors().filter('traffic.traffic_light*'):
+        tl.set_state(carla.TrafficLightState.Red)
+
+    if ego_light is not None:
+        ego_light.set_state(carla.TrafficLightState.Green)
+        print(f"T10J189 lights: ego approach TL {ego_light.id} → Green")
+    else:
+        print("WARN T10J189: could not find ego approach traffic light")
+
+    if cross_light is not None:
+        cross_light.set_state(carla.TrafficLightState.Red)
+        print(f"T10J189 lights: cross approach TL {cross_light.id} → Red")
+    else:
+        print("WARN T10J189: could not find cross approach traffic light")
+
 def init_world():
     global client, carla_world, carla_map, lane_wps, driving_lane_num
 
@@ -58,6 +119,48 @@ def init_world():
         lane_wps = [get_wp(10.0, -64.7, 0), get_wp(10.0, -68.2, 0), get_wp(10.0, -75.6, 0)] # bus stop at (54.1, -68.2)
         driving_lane_num = 2
         # bus_stop_pos = 44.1 # 150 - (44.1 + 3.5) = 102.4
+    elif args.road == 'T04VehiclePassing':
+        carla_world = client.load_world("Town04")
+        carla_map = carla_world.get_map()
+        # CARLA ManeuverOppositeDirection_2 (Town04): two-way passing road.
+        inbound = get_wp(63.3, -190.3, 0)
+        opposite = find_opposite_driving_wp(inbound)
+        if opposite is None:
+            raise RuntimeError("T04VehiclePassing: no opposite Driving lane found near (63.3,-190.3)")
+        print(f"T04VehiclePassing inbound lane_id={inbound.lane_id} yaw={inbound.transform.rotation.yaw:.1f}")
+        print(f"T04VehiclePassing opposite lane_id={opposite.lane_id} yaw={opposite.transform.rotation.yaw:.1f}")
+        lane_wps = [inbound, opposite]
+        driving_lane_num = 2
+    elif args.road == 'T10VehiclePassing':
+        carla_world = client.load_world("Town10HD")
+        carla_map = carla_world.get_map()
+        # Ego inbound near T10Urban1 corridor; lane 2 = true opposite carriageway.
+        inbound = get_wp(106, 35, 0)
+        opposite = find_opposite_driving_wp(inbound)
+        if opposite is None:
+            raise RuntimeError("T10VehiclePassing: no opposite Driving lane found near (106,35)")
+        print(f"T10VehiclePassing inbound lane_id={inbound.lane_id} yaw={inbound.transform.rotation.yaw:.1f}")
+        print(f"T10VehiclePassing opposite lane_id={opposite.lane_id} yaw={opposite.transform.rotation.yaw:.1f}")
+        lane_wps = [inbound, opposite]
+        driving_lane_num = 2
+    elif args.road == 'T10J189':
+        # Town10HD_Opt junction 189 — conflict ≈ (-48.7, 24.5).
+        # lane 1: ego south→north (straight through)
+        # lane 2: crossing west→east (red-light runner)
+        carla_world = client.load_world("Town10HD_Opt")
+        carla_map = carla_world.get_map()
+        ego_approach = get_wp(-48.8, -17.5, 0)   # ~40 m south of conflict, yaw≈90
+        cross_approach = get_wp(-68.7, 24.5, 0)  # ~20 m west of conflict, yaw≈0
+        if ego_approach.is_junction or cross_approach.is_junction:
+            print(f"WARN T10J189: approach wp in junction "
+                  f"(ego_junc={ego_approach.is_junction}, cross_junc={cross_approach.is_junction})")
+        print(f"T10J189 ego   lane_id={ego_approach.lane_id} yaw={ego_approach.transform.rotation.yaw:.1f} "
+              f"loc=({ego_approach.transform.location.x:.1f},{ego_approach.transform.location.y:.1f})")
+        print(f"T10J189 cross lane_id={cross_approach.lane_id} yaw={cross_approach.transform.rotation.yaw:.1f} "
+              f"loc=({cross_approach.transform.location.x:.1f},{cross_approach.transform.location.y:.1f})")
+        lane_wps = [ego_approach, cross_approach]
+        driving_lane_num = 2
+        setup_junction189_lights(carla_world, ego_approach, cross_approach)
     elif args.road == 'T05Urban':
         carla_world = client.load_world("Town05")
         carla_map = carla_world.get_map()
@@ -99,7 +202,7 @@ if __name__ == "__main__":
                         help="carla host port (default: 2000)")
     parser.add_argument("-r", "--road", 
                         type=str,
-                        help="select road segment: T04Highway, T05Highway, T06Highway, T10Urban1, T10Urban2, T05Urban", required=True)
+                        help="select road segment: T04Highway, T05Highway, T06Highway, T10Urban1, T10Urban2, T05Urban, T04VehiclePassing, T10VehiclePassing, T10J189", required=True)
     parser.add_argument("-s", "--script", 
                         type=str,
                         help="path/to/script.json")

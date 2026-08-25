@@ -1,0 +1,4 @@
+Scene description:
+The VUT (Vehicle Under Test / ego) is driving on a multi-lane highway behind a leading vehicle in the same lane that is moving too slowly. The VUT should perform a lane change to overtake and evade that slow leading vehicle. There is another leading vehicle in the adjacent lane traveling at a normal speed. When overtaking, the VUT must avoid colliding with both the slow lead vehicle and the adjacent-lane vehicle.
+
+Road environment description: 3 lane highway, road length 80

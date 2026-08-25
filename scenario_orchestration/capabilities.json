@@ -1,0 +1,69 @@
+{
+  "name": "laser",
+  "schema_version": "1.0.0",
+  "scenario_families": [
+    "red_light",
+    "cut_in",
+    "lane_change",
+    "overtake"
+  ],
+  "policy_interfaces": ["ego_policy_v1"],
+  "observation_spaces": ["sensor"],
+  "action_spaces": ["control"],
+  "closed_loop": true,
+
+  "entry_point": "scenario_orchestration/run.py",
+  "native_scenarios": {
+    "carla": {
+      "red_light": {
+        "road": "T10J189",
+        "script": "laser_scenes/RedLight/script.json"
+      },
+      "cut_in": {
+        "road": "T10Urban1",
+        "script": "laser_scenes/Cut-in/script.json"
+      },
+      "lane_change": {
+        "road": "T04Highway",
+        "script": "laser_scenes/LaneChanging/script.json"
+      },
+      "overtake": {
+        "road": "T04VehiclePassing",
+        "script": "laser_scenes/VehiclePassing/script.json"
+      }
+    }
+  },
+  "native_id_aliases": {
+    "vehicle_passing": "overtake",
+    "lane_changing": "lane_change",
+    "red_light_running": "red_light",
+    "red_light_violation": "red_light"
+  },
+
+  "policies": {
+    "native": ["transfuser", "interfuser"],
+    "external": "not yet: LASER currently wires ego via LASER_EGO / TRANSFUSER_CKPT inside its own runner; a policy bridge like OSC2's osc2carla_policy_bridge.py is future work",
+    "parameter_translation": {
+      "checkpoint": "TRANSFUSER_CKPT"
+    }
+  },
+
+  "metrics": [
+    "scenario_realized",
+    "scenario_success",
+    "collision",
+    "time_to_event",
+    "scenario_duration"
+  ],
+
+  "notes": {
+    "identity": "LASER (LLM-assisted scenario execution) running closed-loop CARLA episodes with scripted/LLM NPCs and a sensorimotor ego (TransFuser / InterFuser).",
+    "closed_loop": "Ego is controlled by the selected AD stack each tick. NPC agents follow LASER scripts (1-step scripts use hold-speed fallback without calling the LLM).",
+    "observation_spaces": "sensor only for native policies. Analytic state policies (idm, constant) are not supported yet; run.py reports failure with a reason rather than inventing a bridge.",
+    "overtake": "Maps to SafeBench Vehicle Passing / ManeuverOppositeDirection (blocking vehicle + oncoming traffic on a two-way road).",
+    "red_light": "Town10HD_Opt junction 189; ego green / cross red; runner waits then goes when ego is near the conflict.",
+    "seed": "Recorded and exported as SCENARIO_ORCHESTRATION_SEED / PYTHONHASHSEED. CARLA physics still contributes residual nondeterminism.",
+    "carla": "Assumes a CARLA server is already listening (CARLA_HOST / CARLA_PORT, default 127.0.0.1:2000). run.py does not start the UE4 process.",
+    "trace": "No dense per-step trace yet. method_metrics references se_records artifacts (time.txt, collisions.txt, video when present)."
+  }
+}

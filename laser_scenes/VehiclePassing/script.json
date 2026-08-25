@@ -1,0 +1,31 @@
+{
+    "VUT": {
+        "type": "VUT",
+        "model": "car",
+        "init_state": [1, 5, 12]
+    },
+    "blocking_vehicle": {
+        "type": "agent",
+        "model": "car",
+        "init_state": [1, -15, 0],
+        "steps": [
+            {
+                "action": "Remain nearly stopped in lane 1 (0 to 1 m/s). Do not change lanes. Do not leave the road.",
+                "termination_condition": "Hold for the next 25 seconds.",
+                "reason": "Block the ego lane so the VUT must pass."
+            }
+        ]
+    },
+    "oncoming_vehicle": {
+        "type": "agent",
+        "model": "car",
+        "init_state": [2, 100, 8],
+        "steps": [
+            {
+                "action": "Drive straight in lane 2 at about 8 m/s. Do not change lanes. Do not leave the road.",
+                "termination_condition": "Hold for the next 25 seconds.",
+                "reason": "Oncoming traffic in the pass lane at 8 m/s."
+            }
+        ]
+    }
+}

@@ -1,0 +1,19 @@
+{
+    "VUT": {
+        "type": "VUT",
+        "model": "car",
+        "init_state": [1, 45, 8]
+    },
+    "oncoming_straight": {
+        "type": "agent",
+        "model": "car",
+        "init_state": [2, 15, 12],
+        "steps": [
+            {
+                "action": "Immediately drive straight through the intersection at about 12 m/s. Do not wait. Do not stop. Do not change lanes. Stay on the road.",
+                "termination_condition": "Hold for the next 20 seconds or until you have cleared the intersection.",
+                "reason": "Go straight through the junction at about 12 m/s in front of the ego."
+            }
+        ]
+    }
+}

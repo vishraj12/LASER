@@ -1,0 +1,41 @@
+{
+    "VUT": {
+        "type": "VUT",
+        "model": "car",
+        "init_state": [2, 55, 12]
+    },
+    "slow_leading_vehicle": {
+        "type": "agent",
+        "model": "car",
+        "init_state": [2, 20, 12],
+        "steps": [
+            {
+                "action": "Maintain about 12 m/s in lane 2.",
+                "termination_condition": "Hold for 1 second.",
+                "reason": "Match SafeBench: both NPCs start at 12 m/s."
+            },
+            {
+                "action": "Decelerate to about 2 m/s in lane 2 and stay in lane.",
+                "termination_condition": "Speed is about 2 m/s.",
+                "reason": "SafeBench dece_target_speed=2 after a short travel."
+            },
+            {
+                "action": "Maintain about 2 m/s in lane 2.",
+                "termination_condition": "Hold for the next 10 seconds.",
+                "reason": "Remain a slow lead so the VUT should lane-change to overtake."
+            }
+        ]
+    },
+    "adjacent_lane_vehicle": {
+        "type": "agent",
+        "model": "car",
+        "init_state": [1, 19, 12],
+        "steps": [
+            {
+                "action": "Maintain about 12 m/s in lane 1.",
+                "termination_condition": "Hold for the next 12 seconds.",
+                "reason": "SafeBench adjacent actor stays at 12 m/s; do not slow down."
+            }
+        ]
+    }
+}

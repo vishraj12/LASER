@@ -69,9 +69,17 @@ class LLMAgent:
             self._chain = template | self._llm
 
             output = self._chain.invoke({})
-            usage_metadata = output.usage_metadata
+            usage_metadata = getattr(output, "usage_metadata", None)
+            if not usage_metadata:
+                token_usage = getattr(output, "response_metadata", {}).get("token_usage", {})
+                usage_metadata = {
+                    "input_tokens": token_usage.get("prompt_tokens", 0),
+                    "output_tokens": token_usage.get("completion_tokens", 0),
+                    "total_tokens": token_usage.get("total_tokens", 0),
+                }
             for k, v in usage_metadata.items():
-                self.usage_metadata[k] += v
+                if k in self.usage_metadata:
+                    self.usage_metadata[k] += v
             tool_calls = output.tool_calls
 
         args = tool_calls[0]['args']

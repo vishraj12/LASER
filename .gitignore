@@ -4,3 +4,7 @@ __pycache__/
 leaderboard/team_code/interfuser.pth.tar
 se_records/*
 *.log
+.venv/
+compare_runs/
+*.bak
+*.bak_*
