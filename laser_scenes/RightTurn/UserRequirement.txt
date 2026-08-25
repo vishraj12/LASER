@@ -1,0 +1,13 @@
+SafeBench right-turn (Xu et al., arXiv:2206.09682, Fig. 4g).
+
+Ego approaches Town10HD_Opt junction 189 from the south and turns RIGHT onto the
+eastbound arm. A crossing vehicle on the west→east approach is released when the
+ego nears the conflict point (~-48.7, 24.5) and drives through the junction,
+forcing collision avoidance.
+
+Road flag: T10J189Right
+  lane 1 = ego approach (south of junction)
+  lane 2 = crossing west→east traffic
+
+VUT.route.destination is east of the junction so TransFuser receives a right-turn
+global plan (see laser/target_vehicle/target_vehicle.py).

@@ -1,0 +1,11 @@
+SafeBench unprotected left-turn (Xu et al., arXiv:2206.09682, Fig. 4f).
+
+Ego (VUT) approaches an intersection and performs an unprotected left turn.
+An opposing vehicle goes straight through the same junction and contests the turn,
+forcing collision-avoidance.
+
+Lane convention once a road flag exists (mirror T10J189):
+  lane 1 = ego approach (must LEFT-TURN through the junction)
+  lane 2 = oncoming through traffic
+
+Needs laser_se.py road geometry + ego turn route (TargetVehicle currently routes straight only).

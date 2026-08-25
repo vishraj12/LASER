@@ -73,8 +73,25 @@ class TargetVehicle(Agent):
         from laser.laser_agents import handle_list
         wp = handle_list(lane_wps[l].previous(x))
         print(wp)
-    
-        gps_route, self.route = interpolate_trajectory(world, [wp.transform.location, lane_wps[l].next(50)[0].transform.location], hop_resolution=1.0)
+
+        # Default: straight ahead on the spawn lane (highways / through junctions).
+        # Optional VUT.route.destination [x, y, z] builds a turn-capable plan via
+        # GlobalRoutePlanner (needed for SafeBench right-turn / unprotected left).
+        end_loc = lane_wps[l].next(50)[0].transform.location
+        route_cfg = agent_script.get("route") or {}
+        dest = route_cfg.get("destination")
+        if dest is not None and len(dest) >= 2:
+            end_loc = carla.Location(
+                float(dest[0]), float(dest[1]), float(dest[2]) if len(dest) > 2 else 0.0
+            )
+            print(
+                f"VUT route maneuver={route_cfg.get('maneuver', 'custom')} "
+                f"destination=({end_loc.x:.1f},{end_loc.y:.1f},{end_loc.z:.1f})"
+            )
+
+        gps_route, self.route = interpolate_trajectory(
+            world, [wp.transform.location, end_loc], hop_resolution=1.0
+        )
         CarlaDataProvider.set_ego_route(convert_transform_to_location(self.route))
 
         self.agent_instance.set_global_plan(gps_route, self.route)

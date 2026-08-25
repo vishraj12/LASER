@@ -2,17 +2,17 @@
     "VUT": {
         "type": "VUT",
         "model": "car",
-        "init_state": [1, 45, 8]
+        "init_state": [1, 40, 8]
     },
     "oncoming_straight": {
         "type": "agent",
         "model": "car",
-        "init_state": [2, 15, 12],
+        "init_state": [2, 35, 12],
         "steps": [
             {
-                "action": "Immediately drive straight through the intersection at about 12 m/s. Do not wait. Do not stop. Do not change lanes. Stay on the road.",
+                "action": "Immediately drive straight through the intersection at about 12 m/s. Do not wait. Do not stop. Do not change lanes. Do not yield to the turning VUT. Stay on the road.",
                 "termination_condition": "Hold for the next 20 seconds or until you have cleared the intersection.",
-                "reason": "Go straight through the junction at about 12 m/s in front of the ego."
+                "reason": "SafeBench unprotected left-turn (arxiv:2206.09682 Fig. 4f): opposing through traffic contests the ego left turn."
             }
         ]
     }

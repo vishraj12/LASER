@@ -161,6 +161,30 @@ def init_world():
         lane_wps = [ego_approach, cross_approach]
         driving_lane_num = 2
         setup_junction189_lights(carla_world, ego_approach, cross_approach)
+    elif args.road == 'T10J189Right':
+        # SafeBench right-turn (arxiv:2206.09682 Fig. 4g) on the same Town10HD_Opt
+        # junction 189 as T10J189, with different ego intent:
+        #   lane 1: ego south→north then RIGHT onto the eastbound arm
+        #   lane 2: crossing west→east vehicle already in the conflict zone
+        # Ego destination is set in laser_scenes/RightTurn/script.json (VUT.route).
+        # Both approaches run green so the crossing actor can occupy the turn path.
+        carla_world = client.load_world("Town10HD_Opt")
+        carla_map = carla_world.get_map()
+        ego_approach = get_wp(-48.8, -17.5, 0)
+        cross_approach = get_wp(-68.7, 24.5, 0)
+        if ego_approach.is_junction or cross_approach.is_junction:
+            print(f"WARN T10J189Right: approach wp in junction "
+                  f"(ego_junc={ego_approach.is_junction}, cross_junc={cross_approach.is_junction})")
+        print(f"T10J189Right ego   lane_id={ego_approach.lane_id} yaw={ego_approach.transform.rotation.yaw:.1f} "
+              f"loc=({ego_approach.transform.location.x:.1f},{ego_approach.transform.location.y:.1f})")
+        print(f"T10J189Right cross lane_id={cross_approach.lane_id} yaw={cross_approach.transform.rotation.yaw:.1f} "
+              f"loc=({cross_approach.transform.location.x:.1f},{cross_approach.transform.location.y:.1f})")
+        lane_wps = [ego_approach, cross_approach]
+        driving_lane_num = 2
+        carla_world.freeze_all_traffic_lights(True)
+        for tl in carla_world.get_actors().filter('traffic.traffic_light*'):
+            tl.set_state(carla.TrafficLightState.Green)
+        print("T10J189Right lights: all frozen Green (ego turn + crossing conflict)")
     elif args.road == 'T05Urban':
         carla_world = client.load_world("Town05")
         carla_map = carla_world.get_map()
@@ -202,7 +226,7 @@ if __name__ == "__main__":
                         help="carla host port (default: 2000)")
     parser.add_argument("-r", "--road", 
                         type=str,
-                        help="select road segment: T04Highway, T05Highway, T06Highway, T10Urban1, T10Urban2, T05Urban, T04VehiclePassing, T10VehiclePassing, T10J189", required=True)
+                        help="select road segment: T04Highway, T05Highway, T06Highway, T10Urban1, T10Urban2, T05Urban, T04VehiclePassing, T10VehiclePassing, T10J189, T10J189Right", required=True)
     parser.add_argument("-s", "--script", 
                         type=str,
                         help="path/to/script.json")

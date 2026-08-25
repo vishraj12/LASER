@@ -46,6 +46,7 @@ NATIVE_SCENARIOS = {
     "cut_in": ("T10Urban1", "laser_scenes/Cut-in/script.json"),
     "lane_change": ("T04Highway", "laser_scenes/LaneChanging/script.json"),
     "overtake": ("T04VehiclePassing", "laser_scenes/VehiclePassing/script.json"),
+    "right_turn": ("T10J189Right", "laser_scenes/RightTurn/script.json"),
 }
 
 #: Harness implementations.yaml native_ids and other aliases -> family keys.
