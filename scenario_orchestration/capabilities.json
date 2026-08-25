@@ -9,7 +9,7 @@
   ],
   "policy_interfaces": ["ego_policy_v1"],
   "observation_spaces": ["sensor"],
-  "action_spaces": ["control"],
+  "action_spaces": ["control", "waypoints"],
   "closed_loop": true,
 
   "entry_point": "scenario_orchestration/run.py",
@@ -37,7 +37,12 @@
     "vehicle_passing": "overtake",
     "lane_changing": "lane_change",
     "red_light_running": "red_light",
-    "red_light_violation": "red_light"
+    "red_light_violation": "red_light",
+    "laser_red_light_violation": "red_light",
+    "laser_adjacent_cut_in": "cut_in",
+    "laser_blocked_lane_change": "lane_change",
+    "laser_unprotected_left": "left_turn",
+    "laser_right_turn_conflict": "right_turn"
   },
 
   "policies": {

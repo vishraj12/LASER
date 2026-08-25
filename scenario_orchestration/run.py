@@ -48,11 +48,18 @@ NATIVE_SCENARIOS = {
     "overtake": ("T04VehiclePassing", "laser_scenes/VehiclePassing/script.json"),
 }
 
+#: Harness implementations.yaml native_ids and other aliases -> family keys.
 NATIVE_ALIASES = {
     "vehicle_passing": "overtake",
     "lane_changing": "lane_change",
     "red_light_running": "red_light",
     "red_light_violation": "red_light",
+    # scenario_orchestration scenarios/*/implementations.yaml (laser: native_id)
+    "laser_red_light_violation": "red_light",
+    "laser_adjacent_cut_in": "cut_in",
+    "laser_blocked_lane_change": "lane_change",
+    "laser_unprotected_left": "left_turn",
+    "laser_right_turn_conflict": "right_turn",
 }
 
 NATIVE_POLICY_NAMES = {
@@ -200,9 +207,11 @@ def build_policy_plan(policy_request: Dict[str, Any]) -> Tuple[Dict[str, str], D
             "policy %r declares interface %r; LASER currently speaks 'ego_policy_v1'"
             % (name, interface)
         )
-    if action_space != "control":
+    # Harness TransFuser declares waypoints; InterFuser-style stacks declare
+    # control. LASER drives both natively inside laser_se / the AD agent.
+    if action_space not in ("control", "waypoints"):
         raise RequestError(
-            "policy %r emits %r; LASER applies control actions only"
+            "policy %r emits %r; native LASER stacks use control or waypoints"
             % (name, action_space)
         )
 
@@ -211,7 +220,7 @@ def build_policy_plan(policy_request: Dict[str, Any]) -> Tuple[Dict[str, str], D
         raise RequestError(
             "policy %r is not one LASER realizes natively (%s). "
             "External ego_policy_v1 bridging (like OSC2's policy bridge) is not "
-            "implemented yet."
+            "implemented yet — analytic policies such as idm need that bridge."
             % (name or "(unnamed)", ", ".join(sorted(NATIVE_POLICY_NAMES)))
         )
 
