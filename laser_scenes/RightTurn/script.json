@@ -2,20 +2,16 @@
     "VUT": {
         "type": "VUT",
         "model": "car",
-        "init_state": [1, 35, 8],
-        "route": {
-            "maneuver": "right",
-            "destination": [-15.0, 24.5, 0.0]
-        }
+        "init_state": [1, 25, 10]
     },
     "crossing_vehicle": {
         "type": "agent",
         "model": "car",
-        "init_state": [2, 25, 12],
+        "init_state": [2, -10, 0],
         "trigger": {
             "type": "ego_distance_to_point",
             "point": [-48.7, 24.5, 0],
-            "distance": 30,
+            "distance": 32,
             "release_speed": 12
         },
         "steps": [

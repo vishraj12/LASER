@@ -63,20 +63,16 @@ class TargetVehicle(Agent):
         # Set target location
 
         init_state = agent_script['init_state']
-        l, x = init_state[0] - 1, abs(init_state[1])
+        l = init_state[0] - 1
 
-        # if wp.lane_id > 0:
-        #     wp = lane_wps[l].previous(x)
-        # else:
-        #     wp = lane_wps[l].next(x)
-
-        from laser.laser_agents import handle_list
-        wp = handle_list(lane_wps[l].previous(x))
+        # Plan from the actual spawn waypoint (same pose as the ego actor).
+        # Recomputing previous(x) can jump onto another road/lane_id and flip yaw.
+        wp = self.init_wp
         print(wp)
 
-        # Default: straight ahead on the spawn lane (highways / through junctions).
-        # Optional VUT.route.destination [x, y, z] builds a turn-capable plan via
-        # GlobalRoutePlanner (needed for SafeBench right-turn / unprotected left).
+        # Default: straight ahead on the spawn lane (same as red_light / highway scenes).
+        # Optional VUT.route.destination is supported for custom experiments but turn
+        # scenarios should not depend on it — ego is driven by TransFuser/Interfuser.
         end_loc = lane_wps[l].next(50)[0].transform.location
         route_cfg = agent_script.get("route") or {}
         dest = route_cfg.get("destination")
@@ -84,6 +80,11 @@ class TargetVehicle(Agent):
             end_loc = carla.Location(
                 float(dest[0]), float(dest[1]), float(dest[2]) if len(dest) > 2 else 0.0
             )
+            end_wp = world.get_map().get_waypoint(
+                end_loc, project_to_road=True, lane_type=carla.LaneType.Driving
+            )
+            if end_wp is not None:
+                end_loc = end_wp.transform.location
             print(
                 f"VUT route maneuver={route_cfg.get('maneuver', 'custom')} "
                 f"destination=({end_loc.x:.1f},{end_loc.y:.1f},{end_loc.z:.1f})"

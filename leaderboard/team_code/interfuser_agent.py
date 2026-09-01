@@ -43,14 +43,17 @@ class DisplayInterface(object):
         self._width = 1200
         self._height = 600
         self._surface = None
+        self._headless = os.environ.get("SDL_VIDEODRIVER") == "dummy"
+        self._display = None
 
-        pygame.init()
-        pygame.font.init()
-        self._clock = pygame.time.Clock()
-        self._display = pygame.display.set_mode(
-            (self._width, self._height), pygame.HWSURFACE | pygame.DOUBLEBUF
-        )
-        pygame.display.set_caption("Human Agent")
+        if not self._headless:
+            pygame.init()
+            pygame.font.init()
+            self._clock = pygame.time.Clock()
+            self._display = pygame.display.set_mode(
+                (self._width, self._height), pygame.HWSURFACE | pygame.DOUBLEBUF
+            )
+            pygame.display.set_caption("Human Agent")
 
     def run_interface(self, input_data):
         rgb = input_data['rgb']
@@ -99,16 +102,18 @@ class DisplayInterface(object):
 
 
         # display image
-        self._surface = pygame.surfarray.make_surface(surface.swapaxes(0, 1))
-        if self._surface is not None:
-            self._display.blit(self._surface, (0, 0))
+        if self._display is not None:
+            self._surface = pygame.surfarray.make_surface(surface.swapaxes(0, 1))
+            if self._surface is not None:
+                self._display.blit(self._surface, (0, 0))
 
-        pygame.display.flip()
-        pygame.event.get()
+            pygame.display.flip()
+            pygame.event.get()
         return surface
 
     def _quit(self):
-        pygame.quit()
+        if self._display is not None:
+            pygame.quit()
 
 
 def get_entry_point():
@@ -219,7 +224,8 @@ class InterfuserAgent(autonomous_agent.AutonomousAgent):
         SAVE_PATH = os.environ.get("SAVE_PATH")
         if SAVE_PATH is not None:
             now = datetime.datetime.now()
-            string = pathlib.Path(os.environ["SCENE"]).stem + "_"
+            scene = os.environ.get("SCENE", "laser_run")
+            string = pathlib.Path(scene).stem + "_"
             string += "_".join(
                 map(
                     lambda x: "%02d" % x,

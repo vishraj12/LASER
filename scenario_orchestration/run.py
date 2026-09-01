@@ -15,7 +15,7 @@ This file mirrors the OSC2Runner contract shape, but launches LASER's existing
 
 MVP scope
 ---------
-* Families: red_light, cut_in, lane_change, overtake (vehicle_passing)
+* Families: red_light, cut_in, lane_change, overtake, right_turn, left_turn
 * Ego policies: transfuser / interfuser (native via env vars)
 * CARLA: assumed already running (override with LASER_CARLA_HOST/PORT)
 
@@ -47,6 +47,7 @@ NATIVE_SCENARIOS = {
     "lane_change": ("T04Highway", "laser_scenes/LaneChanging/script.json"),
     "overtake": ("T04VehiclePassing", "laser_scenes/VehiclePassing/script.json"),
     "right_turn": ("T10J189Right", "laser_scenes/RightTurn/script.json"),
+    "left_turn": ("T10J189Left", "laser_scenes/UnprotectedLeftTurn/script.json"),
 }
 
 #: Harness implementations.yaml native_ids and other aliases -> family keys.
@@ -237,6 +238,9 @@ def build_policy_plan(policy_request: Dict[str, Any]) -> Tuple[Dict[str, str], D
         notes_space = "sensor"
 
     env: Dict[str, str] = {"LASER_EGO": resolved}
+    if resolved == "interfuser":
+        # InterfuserAgent opens a pygame debug window; headless nodes need dummy SDL.
+        env.setdefault("SDL_VIDEODRIVER", "dummy")
     ckpt = (
         parameters.get("checkpoint")
         or policy_request.get("checkpoint")
@@ -553,6 +557,10 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     timeout_s = _env_float("LASER_RUN_TIMEOUT_S") or DEFAULT_RUN_TIMEOUT_S
     context["command"] = list(command)
     context["timeout_s"] = timeout_s
+
+    if context.get("policy_resolved") == "interfuser":
+        # TargetVehicleRecorder sets SAVE_PATH; InterfuserAgent.setup expects SCENE too.
+        policy_env.setdefault("SCENE", script_path)
 
     sys.stderr.write(
         "[run.py] %s: %s on %s (%s, %.1fs)\n"

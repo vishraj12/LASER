@@ -6,7 +6,8 @@
     "cut_in",
     "lane_change",
     "overtake",
-    "right_turn"
+    "right_turn",
+    "left_turn"
   ],
   "policy_interfaces": ["ego_policy_v1"],
   "observation_spaces": ["sensor"],
@@ -35,6 +36,10 @@
       "right_turn": {
         "road": "T10J189Right",
         "script": "laser_scenes/RightTurn/script.json"
+      },
+      "left_turn": {
+        "road": "T10J189Left",
+        "script": "laser_scenes/UnprotectedLeftTurn/script.json"
       }
     }
   },
@@ -72,7 +77,8 @@
     "observation_spaces": "sensor only for native policies. Analytic state policies (idm, constant) are not supported yet; run.py reports failure with a reason rather than inventing a bridge.",
     "overtake": "Maps to SafeBench Vehicle Passing / ManeuverOppositeDirection (blocking vehicle + oncoming traffic on a two-way road).",
     "red_light": "Town10HD_Opt junction 189; ego green / cross red; runner waits then goes when ego is near the conflict.",
-    "right_turn": "SafeBench right-turn on Town10HD_Opt junction 189 (T10J189Right): ego turns right; crossing vehicle released into the conflict zone. VUT.route.destination builds the turn plan.",
+    "right_turn": "SafeBench right-turn on Town10HD_Opt junction 189 (T10J189Right): crossing vehicle released into the ego conflict zone when the VUT is near.",
+    "left_turn": "SafeBench unprotected left-turn on Town10HD_Opt junction 189 (T10J189Left): oncoming north→south traffic drives straight through the conflict zone at 12 m/s.",
     "seed": "Recorded and exported as SCENARIO_ORCHESTRATION_SEED / PYTHONHASHSEED. CARLA physics still contributes residual nondeterminism.",
     "carla": "Assumes a CARLA server is already listening (CARLA_HOST / CARLA_PORT, default 127.0.0.1:2000). run.py does not start the UE4 process.",
     "trace": "No dense per-step trace yet. method_metrics references se_records artifacts (time.txt, collisions.txt, video when present)."

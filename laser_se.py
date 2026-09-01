@@ -185,6 +185,33 @@ def init_world():
         for tl in carla_world.get_actors().filter('traffic.traffic_light*'):
             tl.set_state(carla.TrafficLightState.Green)
         print("T10J189Right lights: all frozen Green (ego turn + crossing conflict)")
+    elif args.road == 'T10J189Left':
+        # SafeBench unprotected left-turn (arxiv:2206.09682 Fig. 4f) on the same
+        # Town10HD_Opt junction 189 as T10J189 / T10J189Right:
+        #   lane 1: ego south→north then LEFT onto the westbound arm
+        #   lane 2: oncoming north→south through traffic on the opposite carriageway
+        # Ego destination is set in laser_scenes/UnprotectedLeftTurn/script.json.
+        carla_world = client.load_world("Town10HD_Opt")
+        carla_map = carla_world.get_map()
+        ego_approach = get_wp(-48.8, -17.5, 0)
+        north_ref = get_wp(-48.8, 45, 0)
+        oncoming_approach = find_opposite_driving_wp(north_ref)
+        if oncoming_approach is None:
+            oncoming_approach = north_ref
+            print("WARN T10J189Left: find_opposite_driving_wp failed; using north_ref")
+        if ego_approach.is_junction or oncoming_approach.is_junction:
+            print(f"WARN T10J189Left: approach wp in junction "
+                  f"(ego_junc={ego_approach.is_junction}, oncoming_junc={oncoming_approach.is_junction})")
+        print(f"T10J189Left ego   lane_id={ego_approach.lane_id} yaw={ego_approach.transform.rotation.yaw:.1f} "
+              f"loc=({ego_approach.transform.location.x:.1f},{ego_approach.transform.location.y:.1f})")
+        print(f"T10J189Left oncoming lane_id={oncoming_approach.lane_id} yaw={oncoming_approach.transform.rotation.yaw:.1f} "
+              f"loc=({oncoming_approach.transform.location.x:.1f},{oncoming_approach.transform.location.y:.1f})")
+        lane_wps = [ego_approach, oncoming_approach]
+        driving_lane_num = 2
+        carla_world.freeze_all_traffic_lights(True)
+        for tl in carla_world.get_actors().filter('traffic.traffic_light*'):
+            tl.set_state(carla.TrafficLightState.Green)
+        print("T10J189Left lights: all frozen Green (unprotected left + oncoming through)")
     elif args.road == 'T05Urban':
         carla_world = client.load_world("Town05")
         carla_map = carla_world.get_map()
@@ -226,7 +253,7 @@ if __name__ == "__main__":
                         help="carla host port (default: 2000)")
     parser.add_argument("-r", "--road", 
                         type=str,
-                        help="select road segment: T04Highway, T05Highway, T06Highway, T10Urban1, T10Urban2, T05Urban, T04VehiclePassing, T10VehiclePassing, T10J189, T10J189Right", required=True)
+                        help="select road segment: T04Highway, T05Highway, T06Highway, T10Urban1, T10Urban2, T05Urban, T04VehiclePassing, T10VehiclePassing, T10J189, T10J189Right, T10J189Left", required=True)
     parser.add_argument("-s", "--script", 
                         type=str,
                         help="path/to/script.json")
