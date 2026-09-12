@@ -1,4 +1,17 @@
 Scene description:
-The VUT (Vehicle Under Test / ego) is driving on a multi-lane highway behind a leading vehicle in the same lane that is moving too slowly. The VUT should perform a lane change to overtake and evade that slow leading vehicle. There is another leading vehicle in the adjacent lane traveling at a normal speed. When overtaking, the VUT must avoid colliding with both the slow lead vehicle and the adjacent-lane vehicle.
+Hard-brake / lane_change (orchestration scenario_hard_brake.yaml).
+The VUT drives in the right lane of a 2-lane same-direction highway behind a
+slow lead in the same lane. An adjacent-lane vehicle ahead travels at a normal
+cruise. The VUT must lane-change (or brake) to evade the slow lead without
+hitting either vehicle. Ego policy is not scripted in this scene; NPCs hold
+constant speed from t=0 via LLM agents (no SafeBench "cruise then brake to 2 m/s" story).
 
-Road environment description: 3 lane highway, road length 80
+Staging (YAML gaps/speeds):
+- Ego (right / lane 2): ~12 m/s
+- Slow lead (same lane): ~30 m ahead, 4 m/s constant
+- Adjacent (left / lane 1): ~12 m ahead of ego, 10.5 m/s constant
+
+Road environment description:
+2 same-direction lanes x 3.5 m, target corridor length >= 160 m (abstract YAML length)
+(CARLA stand-in: Town04 road 47 via T04HardBrake, ~100 m on-road look-ahead;
+script frame uses relative lane/long init_state, not YAML absolute x=+/-1.75).

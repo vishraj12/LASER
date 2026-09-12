@@ -16,11 +16,8 @@ This file mirrors the OSC2Runner contract shape, but launches LASER's existing
 MVP scope
 ---------
 * Families: red_light, cut_in, lane_change, overtake, right_turn, left_turn
-* Ego policies: transfuser / interfuser (native via env vars)
+* Ego policies: transfuser / interfuser / plant2 / idm / tfv6 / simlingo (native via LASER_EGO)
 * CARLA: assumed already running (override with LASER_CARLA_HOST/PORT)
-
-External ego_policy_v1 bridging (OSC2's osc2carla_policy_bridge.py) is not
-implemented yet; unsupported policies return ``failure`` with a clear reason.
 """
 
 from __future__ import annotations
@@ -43,9 +40,9 @@ LASER_LOG_FILE = "laser.log"
 #: Family -> (road flag for laser_se.py, script path relative to REPO_ROOT)
 NATIVE_SCENARIOS = {
     "red_light": ("T10J189", "laser_scenes/RedLight/script.json"),
-    "cut_in": ("T10Urban1", "laser_scenes/Cut-in/script.json"),
-    "lane_change": ("T04Highway", "laser_scenes/LaneChanging/script.json"),
-    "overtake": ("T04VehiclePassing", "laser_scenes/VehiclePassing/script.json"),
+    "cut_in": ("T04CutIn", "laser_scenes/Cut-in/script.json"),
+    "lane_change": ("T04HardBrake", "laser_scenes/LaneChanging/script.json"),
+    "overtake": ("T01Overtake", "laser_scenes/VehiclePassing/script.json"),
     "right_turn": ("T10J189Right", "laser_scenes/RightTurn/script.json"),
     "left_turn": ("T10J189Left", "laser_scenes/UnprotectedLeftTurn/script.json"),
 }
@@ -66,7 +63,23 @@ NATIVE_ALIASES = {
 
 NATIVE_POLICY_NAMES = {
     "transfuser": "transfuser",
+    "laser_transfuser": "transfuser",
     "interfuser": "interfuser",
+    "laser_interfuser": "interfuser",
+    "plant2": "plant2",
+    "plant": "plant2",
+    "laser_plant2": "plant2",
+    "idm": "idm",
+    "idm_conservative": "idm",
+    "idm_assertive": "idm",
+    "idm_highway": "idm",
+    "idm_mobil": "idm",
+    "laser_idm": "idm",
+    "tfv6": "tfv6",
+    "transfuser_v6": "tfv6",
+    "laser_tfv6": "tfv6",
+    "simlingo": "simlingo",
+    "laser_simlingo": "simlingo",
 }
 
 DEFAULT_HORIZON_S = 15.0
@@ -110,6 +123,50 @@ def _as_float(value: Any) -> Optional[float]:
         return float(value)
     except (TypeError, ValueError):
         return None
+
+
+def _resolve_plant2_checkpoint(
+    declared: str, plant_root: Optional[str], seed: int
+) -> str:
+    """Resolve a PlanT2 checkpoint file, including seed-indexed directories."""
+    expanded = os.path.expanduser(str(declared))
+    candidates = [expanded]
+    if not os.path.isabs(expanded):
+        # Policy configs are relative to the central scenario_orchestration repo,
+        # while this adapter executes from third_party/laser.
+        harness_root = os.path.dirname(os.path.dirname(REPO_ROOT))
+        candidates.extend(
+            [
+                os.path.join(harness_root, expanded),
+                os.path.join(REPO_ROOT, expanded),
+            ]
+        )
+        if plant_root:
+            candidates.append(
+                os.path.join(str(plant_root), "checkpoints", os.path.basename(expanded))
+            )
+
+    seen = set()
+    for candidate in candidates:
+        path = os.path.abspath(candidate)
+        if path in seen:
+            continue
+        seen.add(path)
+        if os.path.isfile(path):
+            return path
+        if os.path.isdir(path):
+            checkpoints = sorted(
+                os.path.join(path, name)
+                for name in os.listdir(path)
+                if name.endswith(".ckpt") and os.path.isfile(os.path.join(path, name))
+            )
+            if not checkpoints:
+                raise RequestError(
+                    "PlanT2 checkpoint directory contains no .ckpt files: %s" % path
+                )
+            return checkpoints[int(seed) % len(checkpoints)]
+
+    raise RequestError("PlanT2 checkpoint does not exist: %s" % declared)
 
 
 _EXCEPTION_LINE = re.compile(r"^\w+(?:Error|Exception|Exit)\b.*: .+")
@@ -220,19 +277,19 @@ def build_policy_plan(policy_request: Dict[str, Any]) -> Tuple[Dict[str, str], D
     resolved = NATIVE_POLICY_NAMES.get(name)
     if resolved is None:
         raise RequestError(
-            "policy %r is not one LASER realizes natively (%s). "
-            "External ego_policy_v1 bridging (like OSC2's policy bridge) is not "
-            "implemented yet — analytic policies such as idm need that bridge."
-            % (name or "(unnamed)", ", ".join(sorted(NATIVE_POLICY_NAMES)))
+            "policy %r is not one LASER realizes natively (%s)."
+            % (name or "(unnamed)", ", ".join(sorted(set(NATIVE_POLICY_NAMES.values()))))
         )
 
     if observation_space not in ("sensor", "state"):
         raise RequestError(
-            "policy %r wants observation_space %r; native LASER policies use sensor"
+            "policy %r wants observation_space %r; native LASER policies use "
+            "sensor or state"
             % (name, observation_space)
         )
-    if observation_space == "state":
-        # TransFuser/InterFuser are sensorimotor; accept the request but note it.
+    if resolved in ("plant2", "idm"):
+        notes_space = "state"
+    elif observation_space == "state":
         notes_space = "requested state; native stack still consumes sensors"
     else:
         notes_space = "sensor"
@@ -260,6 +317,139 @@ def build_policy_plan(policy_request: Dict[str, Any]) -> Tuple[Dict[str, str], D
                 "transfuser requires TRANSFUSER_CKPT or policy.checkpoint / "
                 "parameters.checkpoint"
             )
+
+    if resolved == "plant2":
+        seed = int(policy_request.get("seed") or 0)
+        plant_root = _env("PLANT2_ROOT")
+        if not plant_root:
+            sibling = os.path.join(os.path.dirname(REPO_ROOT), "plant2")
+            if os.path.isdir(sibling):
+                plant_root = sibling
+        if plant_root:
+            env["PLANT2_ROOT"] = os.path.abspath(os.path.expanduser(str(plant_root)))
+
+        plant_ckpt = (
+            parameters.get("checkpoint")
+            or policy_request.get("checkpoint")
+            or _env("PLANT2_CHECKPOINT")
+            or _env("PLANT_CHECKPOINT")
+        )
+        if plant_ckpt:
+            checkpoint = _resolve_plant2_checkpoint(
+                str(plant_ckpt), plant_root, seed
+            )
+            env["PLANT2_CHECKPOINT"] = checkpoint
+            env["PLANT_CHECKPOINT"] = checkpoint
+        # Seed for checkpoint selection among epoch=029_final_{1,2,3}.ckpt
+        env["PLANT2_SEED"] = str(seed)
+        # Map IDM-style aggressiveness knobs onto nothing for plant2; speed limit only.
+        if "desired_speed_mps" in parameters:
+            # Informative only — PlanT is not IDM; ignore for control.
+            pass
+
+    if resolved == "idm":
+        # Propagate harness IDM parameters into the LASER IDM env knobs.
+        mapping = {
+            "desired_speed_mps": "IDM_DESIRED_SPEED_MPS",
+            "time_headway_s": "IDM_TIME_HEADWAY_S",
+            "min_gap_m": "IDM_MIN_GAP_M",
+            "max_accel_mps2": "IDM_MAX_ACCEL_MPS2",
+            "comfort_decel_mps2": "IDM_COMFORT_DECEL_MPS2",
+        }
+        for src, dst in mapping.items():
+            if src in parameters and parameters[src] is not None:
+                env[dst] = str(parameters[src])
+        # idm_mobil is a named policy (always MOBIL on). Other IDM names still
+        # get MOBIL auto-enabled only for lane_change / overtake in main().
+        if name == "idm_mobil":
+            env["IDM_ENABLE_MOBIL"] = "1"
+            if "lane_width_m" in parameters and parameters["lane_width_m"] is not None:
+                # LASER IDM uses half-width for corridor checks.
+                env["IDM_LANE_HALF_WIDTH_M"] = str(float(parameters["lane_width_m"]) / 2.0)
+            mobil_map = {
+                "politeness": "MOBIL_P",
+                "a_thr": "MOBIL_A_THR",
+                "b_safe": "MOBIL_B_SAFE",
+            }
+            for src, dst in mobil_map.items():
+                if src in parameters and parameters[src] is not None:
+                    env[dst] = str(parameters[src])
+
+    if resolved == "tfv6":
+        tfv6_root = _env("TFV6_ROOT")
+        if not tfv6_root:
+            sibling = os.path.join(os.path.dirname(REPO_ROOT), "tfv6")
+            if os.path.isdir(sibling):
+                tfv6_root = sibling
+        if tfv6_root:
+            env["TFV6_ROOT"] = os.path.abspath(os.path.expanduser(str(tfv6_root)))
+
+        tfv6_ckpt = (
+            parameters.get("checkpoint")
+            or policy_request.get("checkpoint")
+            or _env("TFV6_CHECKPOINT")
+        )
+        if tfv6_ckpt:
+            # Policy yaml may use a harness-relative path (third_party/...).
+            ckpt_path = str(tfv6_ckpt)
+            if not os.path.isabs(ckpt_path):
+                harness_root = os.path.dirname(os.path.dirname(REPO_ROOT))
+                candidate = os.path.join(harness_root, ckpt_path)
+                if os.path.isdir(candidate) or os.path.isfile(candidate):
+                    ckpt_path = candidate
+            env["TFV6_CHECKPOINT"] = os.path.abspath(os.path.expanduser(ckpt_path))
+        seed = int(policy_request.get("seed") or 0)
+        env["TFV6_SEED"] = str(seed)
+        # Real RGB for sensorimotor eval (unless the caller already opted out).
+        env.setdefault("LASER_NO_RENDERING", "0")
+
+    if resolved == "simlingo":
+        simlingo_root = _env("SIMLINGO_ROOT")
+        if not simlingo_root:
+            sibling = os.path.join(os.path.dirname(REPO_ROOT), "simlingo")
+            if os.path.isdir(sibling):
+                simlingo_root = sibling
+        if simlingo_root:
+            env["SIMLINGO_ROOT"] = os.path.abspath(os.path.expanduser(str(simlingo_root)))
+
+        harness_root = os.path.dirname(os.path.dirname(REPO_ROOT))
+
+        def _abs_harness(path: Any) -> Optional[str]:
+            if path is None:
+                return None
+            raw = str(path)
+            if not os.path.isabs(raw):
+                candidate = os.path.join(harness_root, raw)
+                if os.path.isdir(candidate) or os.path.isfile(candidate):
+                    raw = candidate
+            return os.path.abspath(os.path.expanduser(raw))
+
+        simlingo_ckpt = (
+            parameters.get("checkpoint")
+            or policy_request.get("checkpoint")
+            or _env("SIMLINGO_CHECKPOINT")
+        )
+        resolved_ckpt = _abs_harness(simlingo_ckpt)
+        if resolved_ckpt:
+            env["SIMLINGO_CHECKPOINT"] = resolved_ckpt
+
+        simlingo_weights = parameters.get("weights") or _env("SIMLINGO_WEIGHTS")
+        resolved_weights = _abs_harness(simlingo_weights)
+        if resolved_weights:
+            env["SIMLINGO_WEIGHTS"] = resolved_weights
+
+        for src, dst in (
+            ("device", "SIMLINGO_DEVICE"),
+            ("mode_token", "SIMLINGO_MODE_TOKEN"),
+            ("instruction", "SIMLINGO_INSTRUCTION"),
+        ):
+            if src in parameters and parameters[src] is not None:
+                env[dst] = str(parameters[src])
+
+        seed = int(policy_request.get("seed") or 0)
+        env["SIMLINGO_SEED"] = str(seed)
+        env.setdefault("AV_CKPT", os.path.join(harness_root, "third_party", "checkpoints"))
+        env.setdefault("LASER_NO_RENDERING", "0")
 
     notes = {
         "policy_mode": "native",
@@ -542,6 +732,12 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         return write_result(
             output_dir, "failure", method_metrics=context, reason=str(exc)
         )
+
+    # IDM+MOBIL only for Merge (lane_change) and Overtake — not cut-in / turns.
+    if policy_env.get("LASER_EGO") == "idm" and family in ("lane_change", "overtake"):
+        policy_env["IDM_ENABLE_MOBIL"] = "1"
+        policy_notes = dict(policy_notes)
+        policy_notes["idm_mobil"] = True
 
     context.update(policy_notes)
     context.update(

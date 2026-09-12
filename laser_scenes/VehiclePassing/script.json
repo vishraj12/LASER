@@ -7,24 +7,24 @@
     "blocking_vehicle": {
         "type": "agent",
         "model": "car",
-        "init_state": [1, -15, 0],
+        "init_state": [1, -20, 0],
         "steps": [
             {
-                "action": "Remain nearly stopped in lane 1 (0 to 1 m/s). Do not change lanes. Do not leave the road.",
+                "action": "Remain stopped in lane 1 (0 m/s). Do not move. Do not change lanes. Do not leave the road.",
                 "termination_condition": "Hold for the next 25 seconds.",
-                "reason": "Block the ego lane so the VUT must pass."
+                "reason": "LASER-native staging: spawn already stopped (~25 m ahead of ego). Timed cruise→brake is not reliable (no clock in LLM obs); same pattern as the working T04 VehiclePassing script."
             }
         ]
     },
     "oncoming_vehicle": {
         "type": "agent",
         "model": "car",
-        "init_state": [2, 100, 8],
+        "init_state": [2, 75, 8],
         "steps": [
             {
                 "action": "Drive straight in lane 2 at about 8 m/s. Do not change lanes. Do not leave the road.",
                 "termination_condition": "Hold for the next 25 seconds.",
-                "reason": "Oncoming traffic in the pass lane at 8 m/s."
+                "reason": "Oncoming in opposite lane at 8 m/s (validation band 5–22 m/s)."
             }
         ]
     }

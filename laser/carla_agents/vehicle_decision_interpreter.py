@@ -26,20 +26,24 @@ class VehicleDecisionInterpreter(BaseDecisionInterpreter):
         self._actor.apply_control(control)
 
     def lane_change_handler(self, lane_change_direction: LANE_CHANGE_DIRECTION): 
-        if lane_change_direction == 'FOLLOW LANE' or lane_change_direction == 'FOLLOW_LANE': # LLM may make mistakes
-            pass
-        elif lane_change_direction == 'LEFT LANE CHANGE':
+        # LLM often emits FOLLOWLANE / FOLLOW_LANE without the canonical space.
+        norm = str(lane_change_direction).strip().upper().replace("_", " ")
+        norm = " ".join(norm.split())
+        if norm in ("FOLLOW LANE", "FOLLOWLANE"):
+            return
+        if norm == "LEFT LANE CHANGE":
             if self.target_lane_num - 1 == 0:
                 return  
             self.target_lane_num = self.target_lane_num - 1
             self._pnc.lane_change('left', other_lane_time=10)
-        elif lane_change_direction == 'RIGHT LANE CHANGE':
+        elif norm == "RIGHT LANE CHANGE":
             if self.target_lane_num + 1 == self.driving_lane_num + 1:
                 return
             self.target_lane_num = self.target_lane_num + 1
             self._pnc.lane_change('right', other_lane_time=10)
         else:
-            raise ValueError('Invalid DSL')
+            print(f"WARNING: Ignoring invalid lane_change_direction={lane_change_direction!r}")
+            return
 
     def target_speed_handler(self, target_speed):
         self._pnc.set_target_speed(3.6 * target_speed)

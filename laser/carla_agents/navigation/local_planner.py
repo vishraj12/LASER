@@ -181,6 +181,9 @@ class LocalPlanner(object):
         available_entries = self._waypoints_queue.maxlen - len(self._waypoints_queue)
         k = min(available_entries, k)
 
+        if not self._waypoints_queue:
+            return
+
         for _ in range(k):
             last_waypoint = self._waypoints_queue[-1][0]
             next_waypoints = list(self.get_next_wp(last_waypoint, self._sampling_radius))
@@ -238,7 +241,12 @@ class LocalPlanner(object):
             self._waypoints_queue.append(elem)
 
         self._stop_waypoint_creation = stop_waypoint_creation
-        self.preparing_lane_change = True
+        # Only true while a lane-change RoadOption is still in the plan.
+        # (Previously always True, which permanently blocked IDM+MOBIL.)
+        self.preparing_lane_change = any(
+            opt in (RoadOption.CHANGELANELEFT, RoadOption.CHANGELANERIGHT)
+            for _, opt in current_plan
+        )
 
     def set_offset(self, offset):
         """Sets an offset for the vehicle"""
@@ -332,7 +340,12 @@ class LocalPlanner(object):
         return len(self._waypoints_queue) == 0
 
     def is_lane_following(self):
-        return self.target_road_option == RoadOption.LANEFOLLOW
+        # Global routes mark highway continuation as STRAIGHT; treat that as
+        # lane-follow so IDM+MOBIL (and LLM lane_change) are not blocked.
+        return self.target_road_option in (
+            RoadOption.LANEFOLLOW,
+            RoadOption.STRAIGHT,
+        )
 
     def get_next_wp(self, wp, dis):
         return wp.next(dis)

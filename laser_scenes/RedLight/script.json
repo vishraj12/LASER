@@ -7,18 +7,22 @@
     "red_light_runner": {
         "type": "agent",
         "model": "car",
-        "init_state": [2, -10, 0],
-        "trigger": {
-            "type": "ego_distance_to_point",
-            "point": [-48.7, 24.5, 0],
-            "distance": 32,
-            "release_speed": 10
-        },
+        "init_state": [2, 0.1, 0],
         "steps": [
             {
-                "action": "Remain stopped at the red light. When released, drive straight through the intersection at about 10 m/s. Do not stop for the VUT. Stay on the road.",
-                "termination_condition": "Hold for the next 20 seconds or until you have cleared the intersection.",
-                "reason": "SafeBench red-light: wait at stop line, then run red when ego is near."
+                "action": "Remain stopped at the red light / stop line",
+                "termination_condition": "When your distance to the VUT is at most about 35 m and the VUT is moving faster than 0.5 m/s.",
+                "reason": "Approximate SafeBench's observable release condition without a deterministic trigger."
+            },
+            {
+                "action": "Drive straight through the intersection at about 10 m/s. Do not stop for the VUT. Stay on the road.",
+                "termination_condition": "when you have cleared the intersection",
+                "reason": "SafeBench red-light: run the light through the ego conflict zone."
+            },
+            {
+                "action": "Maintain about 10 m/s in your lane",
+                "termination_condition": "Hold for the next 10 seconds",
+                "reason": ""
             }
         ]
     }

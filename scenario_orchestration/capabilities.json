@@ -9,11 +9,18 @@
     "right_turn",
     "left_turn"
   ],
-  "policy_interfaces": ["ego_policy_v1"],
-  "observation_spaces": ["sensor"],
-  "action_spaces": ["control", "waypoints"],
+  "policy_interfaces": [
+    "ego_policy_v1"
+  ],
+  "observation_spaces": [
+    "sensor",
+    "state"
+  ],
+  "action_spaces": [
+    "control",
+    "waypoints"
+  ],
   "closed_loop": true,
-
   "entry_point": "scenario_orchestration/run.py",
   "native_scenarios": {
     "carla": {
@@ -22,15 +29,15 @@
         "script": "laser_scenes/RedLight/script.json"
       },
       "cut_in": {
-        "road": "T10Urban1",
+        "road": "T04CutIn",
         "script": "laser_scenes/Cut-in/script.json"
       },
       "lane_change": {
-        "road": "T04Highway",
+        "road": "T04HardBrake",
         "script": "laser_scenes/LaneChanging/script.json"
       },
       "overtake": {
-        "road": "T04VehiclePassing",
+        "road": "T01Overtake",
         "script": "laser_scenes/VehiclePassing/script.json"
       },
       "right_turn": {
@@ -54,15 +61,20 @@
     "laser_unprotected_left": "left_turn",
     "laser_right_turn_conflict": "right_turn"
   },
-
   "policies": {
-    "native": ["transfuser", "interfuser"],
-    "external": "not yet: LASER currently wires ego via LASER_EGO / TRANSFUSER_CKPT inside its own runner; a policy bridge like OSC2's osc2carla_policy_bridge.py is future work",
+    "native": [
+      "transfuser",
+      "interfuser",
+      "plant2",
+      "idm",
+      "tfv6"
+    ],
+    "external": "tfv6 runs via a Python 3.10 worker bridge (third_party/tfv6/.venv); plant2 loads in-process",
     "parameter_translation": {
-      "checkpoint": "TRANSFUSER_CKPT"
+      "checkpoint": "TRANSFUSER_CKPT, PLANT2_CHECKPOINT, or TFV6_CHECKPOINT depending on ego",
+      "desired_speed_mps": "IDM_DESIRED_SPEED_MPS"
     }
   },
-
   "metrics": [
     "scenario_realized",
     "scenario_success",
@@ -70,15 +82,16 @@
     "time_to_event",
     "scenario_duration"
   ],
-
   "notes": {
-    "identity": "LASER (LLM-assisted scenario execution) running closed-loop CARLA episodes with scripted/LLM NPCs and a sensorimotor ego (TransFuser / InterFuser).",
-    "closed_loop": "Ego is controlled by the selected AD stack each tick. NPC agents follow LASER scripts (1-step scripts use hold-speed fallback without calling the LLM).",
-    "observation_spaces": "sensor only for native policies. Analytic state policies (idm, constant) are not supported yet; run.py reports failure with a reason rather than inventing a bridge.",
-    "overtake": "Maps to SafeBench Vehicle Passing / ManeuverOppositeDirection (blocking vehicle + oncoming traffic on a two-way road).",
-    "red_light": "Town10HD_Opt junction 189; ego green / cross red; runner waits then goes when ego is near the conflict.",
-    "right_turn": "SafeBench right-turn on Town10HD_Opt junction 189 (T10J189Right): crossing vehicle released into the ego conflict zone when the VUT is near.",
-    "left_turn": "SafeBench unprotected left-turn on Town10HD_Opt junction 189 (T10J189Left): oncoming north→south traffic drives straight through the conflict zone at 12 m/s.",
+    "identity": "LASER (LLM-assisted scenario execution) running closed-loop CARLA episodes with scripted/LLM NPCs and a sensorimotor or privileged ego (TransFuser / InterFuser / PlanT2 / IDM).",
+    "closed_loop": "Ego is controlled by the selected AD stack each tick. NPC agents follow LASER multi-step scripts; the LLM is queried until the agent reaches the last step, then hold-speed fallback applies (same as stock laser_scenes).",
+    "observation_spaces": "sensor for TransFuser/InterFuser; state (+ BEV raster) for PlanT2; state for IDM.",
+    "plant2": "Requires PLANT2_CHECKPOINT (or checkpoints under third_party/plant2/checkpoints) and BEV map h5 under carla_garage/birds_eye_view/maps_2ppm_cv. PLANT2_BLANK_BEV=1 is plumbing-only.",
+    "idm": "Analytic Intelligent Driver Model; tune via IDM_DESIRED_SPEED_MPS and related env knobs. All idm* policy yamls are valid on every family (cartesian product). IDM+MOBIL is forced for idm_mobil and also auto-enabled on lane_change / overtake.",
+    "overtake": "Town01 road 8 (T01Overtake): undivided 2-way, 4.0 m lanes; blocker + oncoming (SafeBench-style Vehicle Passing / ManeuverOppositeDirection).",
+    "red_light": "Town10HD_Opt junction 189; ego green / cross red; LLM NPC waits at the stop line then runs the light when it judges the VUT is near.",
+    "right_turn": "SafeBench right-turn on Town10HD_Opt junction 189 (T10J189Right): LLM crossing vehicle waits then drives through the ego conflict zone.",
+    "left_turn": "SafeBench unprotected left-turn on Town10HD_Opt junction 189 (T10J189Left): LLM oncoming traffic drives straight through the conflict zone at about 12 m/s.",
     "seed": "Recorded and exported as SCENARIO_ORCHESTRATION_SEED / PYTHONHASHSEED. CARLA physics still contributes residual nondeterminism.",
     "carla": "Assumes a CARLA server is already listening (CARLA_HOST / CARLA_PORT, default 127.0.0.1:2000). run.py does not start the UE4 process.",
     "trace": "No dense per-step trace yet. method_metrics references se_records artifacts (time.txt, collisions.txt, video when present)."

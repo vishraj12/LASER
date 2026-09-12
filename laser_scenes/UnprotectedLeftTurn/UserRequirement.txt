@@ -1,11 +1,13 @@
 SafeBench unprotected left-turn (Xu et al., arXiv:2206.09682, Fig. 4f).
 
-Ego (VUT) approaches an intersection and performs an unprotected left turn.
-An opposing vehicle goes straight through the same junction and contests the turn,
-forcing collision-avoidance.
+Ego (VUT) approaches Town10HD_Opt junction 189 and performs an unprotected left
+turn. An opposing LLM agent drives straight through the junction and contests
+the turn.
 
-Lane convention once a road flag exists (mirror T10J189):
-  lane 1 = ego approach (must LEFT-TURN through the junction)
+Road flag: T10J189Left
+  lane 1 = ego approach (south of junction; left-turn intent from the AD stack)
   lane 2 = oncoming through traffic
 
-Needs laser_se.py road geometry + ego turn route (TargetVehicle currently routes straight only).
+Script: laser_scenes/UnprotectedLeftTurn/script.json
+  VUT = policy-driven ego (no VUT.route)
+  oncoming_straight = multi-step LLM agent (no hard trigger)

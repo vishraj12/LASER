@@ -1,13 +1,16 @@
-SafeBench right-turn (Xu et al., arXiv:2206.09682, Fig. 4g).
+SafeBench / figure-matched right-turn (Xu et al. Fig. 4g style).
 
-Ego approaches Town10HD_Opt junction 189 from the south and turns RIGHT onto the
-eastbound arm. A crossing vehicle on the west→east approach is released when the
-ego nears the conflict point (~-48.7, 24.5) and drives through the junction,
-forcing collision avoidance.
+Ego sits near the south stop line with a RED light and turns RIGHT onto the
+eastbound arm. Through traffic on the west→east approach already has GREEN and
+is moving into the junction, so the turn conflicts with occupied destination
+traffic (not a red-light clone, not an OSC2 rear-end).
 
 Road flag: T10J189Right
-  lane 1 = ego approach (south of junction)
-  lane 2 = crossing west→east traffic
+  lane 1 = ego approach (south of junction, near stop line)
+  lane 2 = through / crossing west→east traffic
 
-VUT.route.destination is east of the junction so TransFuser receives a right-turn
-global plan (see laser/target_vehicle/target_vehicle.py).
+Lights: ego approach RED, cross approach GREEN (frozen).
+
+Script: laser_scenes/RightTurn/script.json
+  VUT ≈ [1, 5, 6] near stop line
+  crossing_vehicle ≈ [2, -20, 12] already past the west pin, moving ~12 m/s

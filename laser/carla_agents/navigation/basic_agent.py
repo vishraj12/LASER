@@ -274,9 +274,12 @@ class BasicAgent(object):
             self._sampling_resolution
         )
         if not path:
+            # Do NOT clear the existing plan — set_global_plan(..., clean_queue=True)
+            # on an empty path leaves _waypoints_queue empty and crashes on the
+            # next LocalPlanner step (deque index out of range).
             print("WARNING: Ignoring the lane change as no path was found")
-        
-        # print(path)
+            return
+
         self.set_global_plan(path, stop_waypoint_creation=False, clean_queue=True)
 
     def _affected_by_traffic_light(self, lights_list=None, max_distance=None):

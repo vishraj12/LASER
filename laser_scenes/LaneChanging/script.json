@@ -1,41 +1,31 @@
 {
-    "VUT": {
-        "type": "VUT",
-        "model": "car",
-        "init_state": [2, 55, 12]
-    },
-    "slow_leading_vehicle": {
-        "type": "agent",
-        "model": "car",
-        "init_state": [2, 20, 12],
-        "steps": [
-            {
-                "action": "Maintain about 12 m/s in lane 2.",
-                "termination_condition": "Hold for 1 second.",
-                "reason": "Match SafeBench: both NPCs start at 12 m/s."
-            },
-            {
-                "action": "Decelerate to about 2 m/s in lane 2 and stay in lane.",
-                "termination_condition": "Speed is about 2 m/s.",
-                "reason": "SafeBench dece_target_speed=2 after a short travel."
-            },
-            {
-                "action": "Maintain about 2 m/s in lane 2.",
-                "termination_condition": "Hold for the next 10 seconds.",
-                "reason": "Remain a slow lead so the VUT should lane-change to overtake."
-            }
-        ]
-    },
-    "adjacent_lane_vehicle": {
-        "type": "agent",
-        "model": "car",
-        "init_state": [1, 19, 12],
-        "steps": [
-            {
-                "action": "Maintain about 12 m/s in lane 1.",
-                "termination_condition": "Hold for the next 12 seconds.",
-                "reason": "SafeBench adjacent actor stays at 12 m/s; do not slow down."
-            }
-        ]
-    }
+	"VUT": {
+		"type": "VUT",
+		"model": "car",
+		"init_state": [2, 1, 12]
+	},
+	"slow_leading_vehicle": {
+		"type": "agent",
+		"model": "car",
+		"init_state": [2, -30, 4],
+		"steps": [
+			{
+				"action": "Stay in lane 2. Hold 4 m/s the whole time. Do not accelerate. Do not change lanes.",
+				"termination_condition": "Hold for the next 20 seconds",
+				"reason": "scenario_hard_brake.yaml actor 1: same lane as ego, 30 m ahead (init long -30 = next()), v0=4 m/s constant."
+			}
+		]
+	},
+	"adjacent_lane_vehicle": {
+		"type": "agent",
+		"model": "car",
+		"init_state": [1, -12, 10.5],
+		"steps": [
+			{
+				"action": "Stay in lane 1. Hold 10.5 m/s. Do not slow down. Do not change lanes.",
+				"termination_condition": "Hold for the next 20 seconds",
+				"reason": "scenario_hard_brake.yaml actor 2: left/adjacent lane, 12 m ahead of ego (init long -12), v0=10.5 m/s constant."
+			}
+		]
+	}
 }

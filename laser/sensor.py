@@ -28,7 +28,16 @@ class CameraSensor:
         self.sensor = world.spawn_actor(bp, transform, attach_to=self.parent_actor, attachment_type=carla.AttachmentType.Rigid)
     
     def destroy(self):
-        self.sensor.destroy()
+        try:
+            if self.sensor is not None and self.sensor.is_listening:
+                self.sensor.stop()
+        except Exception:
+            pass
+        try:
+            if self.sensor is not None:
+                self.sensor.destroy()
+        except Exception:
+            pass
 
         
     # @staticmethod
@@ -53,7 +62,16 @@ class CollisionSensor:
         self.sensor.listen(lambda data, agent=self.parent_agent: CollisionSensor.sensor_callback(data, agent, queue))
 
     def destroy(self):
-        self.sensor.destroy()
+        try:
+            if self.sensor is not None and self.sensor.is_listening:
+                self.sensor.stop()
+        except Exception:
+            pass
+        try:
+            if self.sensor is not None:
+                self.sensor.destroy()
+        except Exception:
+            pass
 
         
     @staticmethod

@@ -7,12 +7,22 @@
     "oncoming_straight": {
         "type": "agent",
         "model": "car",
-        "init_state": [2, -25, 12],
+        "init_state": [2, 0.1, 0],
         "steps": [
             {
-                "action": "Immediately drive straight through the intersection at about 12 m/s. Do not wait. Do not stop. Do not change lanes. Do not yield to the turning VUT. Stay on the road.",
-                "termination_condition": "Hold for the next 20 seconds or until you have cleared the intersection.",
-                "reason": "SafeBench unprotected left-turn (arxiv:2206.09682 Fig. 4f): opposing through traffic contests the ego left turn."
+                "action": "Remain stopped on the oncoming approach without entering the intersection.",
+                "termination_condition": "When your distance to the VUT is at most about 45 m.",
+                "reason": "Approximate the SafeBench release distance while keeping the actor on its valid approach."
+            },
+            {
+                "action": "Drive straight through the intersection at about 12 m/s. Do not wait. Do not stop. Do not change lanes. Do not yield to the turning VUT. Stay on the road.",
+                "termination_condition": "when you have cleared the intersection",
+                "reason": "SafeBench unprotected left-turn: opposing through traffic contests the ego left turn."
+            },
+            {
+                "action": "Maintain about 12 m/s in your lane",
+                "termination_condition": "Hold for the next 10 seconds",
+                "reason": ""
             }
         ]
     }

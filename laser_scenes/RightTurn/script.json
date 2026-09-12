@@ -2,23 +2,22 @@
     "VUT": {
         "type": "VUT",
         "model": "car",
-        "init_state": [1, 25, 10]
+        "init_state": [1, 5, 6]
     },
     "crossing_vehicle": {
         "type": "agent",
         "model": "car",
-        "init_state": [2, -10, 0],
-        "trigger": {
-            "type": "ego_distance_to_point",
-            "point": [-48.7, 24.5, 0],
-            "distance": 32,
-            "release_speed": 12
-        },
+        "init_state": [2, -20, 12],
         "steps": [
             {
-                "action": "Remain stopped until released. When released, drive straight into and through the intersection at about 12 m/s. Do not wait. Do not stop. Do not yield to the turning VUT. Stay on the road.",
-                "termination_condition": "Hold for the next 20 seconds or until you have cleared the intersection.",
-                "reason": "SafeBench right-turn (arxiv:2206.09682 Fig. 4g): crossing vehicle occupies the ego right-turn conflict zone."
+                "action": "Drive straight through the intersection at about 12 m/s. Do not stop. Do not yield to the turning VUT. Stay on the road.",
+                "termination_condition": "when you have cleared the intersection",
+                "reason": "Figure-matched right-turn: through traffic already moving on green into the conflict zone while ego turns right from a red."
+            },
+            {
+                "action": "Maintain about 12 m/s in your lane",
+                "termination_condition": "Hold for the next 10 seconds",
+                "reason": ""
             }
         ]
     }

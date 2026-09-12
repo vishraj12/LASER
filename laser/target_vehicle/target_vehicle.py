@@ -26,6 +26,86 @@ def convert_transform_to_location(transform_vec):
     return location_vec
 
 
+def _yaw_delta_deg(yaw_a, yaw_b):
+    return abs((yaw_a - yaw_b + 180.0) % 360.0 - 180.0)
+
+
+def _signed_yaw_delta_deg(from_yaw, to_yaw):
+    return (to_yaw - from_yaw + 180.0) % 360.0 - 180.0
+
+
+def ego_route_end_location(world, start_wp, distance, maneuver="straight"):
+    """End pose ~distance m along the intended ego maneuver.
+
+    Same role as stock LASER ``wp.next(d)[0]`` (automatic mission goal, not
+    scripted controls). At junction forks, ``maneuver`` selects among
+    successors: ``straight`` / ``left`` / ``right``.
+    """
+    maneuver = (maneuver or "straight").lower()
+    yaw0 = start_wp.transform.rotation.yaw
+    candidates = list(start_wp.next(distance) or [])
+
+    def _probe(lateral_sign: float):
+        """lateral_sign: -1 = left of travel, +1 = right."""
+        loc = start_wp.transform.location
+        fwd = start_wp.transform.get_forward_vector()
+        right = start_wp.transform.get_right_vector()
+        probe = carla.Location(
+            loc.x + fwd.x * distance * 0.45 + right.x * lateral_sign * distance * 0.55,
+            loc.y + fwd.y * distance * 0.45 + right.y * lateral_sign * distance * 0.55,
+            loc.z,
+        )
+        end_wp = world.get_map().get_waypoint(
+            probe, project_to_road=True, lane_type=carla.LaneType.Driving
+        )
+        return end_wp.transform.location if end_wp is not None else probe
+
+    if maneuver == "left":
+        if candidates:
+            best = max(
+                candidates,
+                key=lambda w: _signed_yaw_delta_deg(yaw0, w.transform.rotation.yaw),
+            )
+            if _signed_yaw_delta_deg(yaw0, best.transform.rotation.yaw) > 15.0:
+                return best.transform.location
+        return _probe(-1.0)
+
+    if maneuver == "right":
+        if candidates:
+            best = min(
+                candidates,
+                key=lambda w: _signed_yaw_delta_deg(yaw0, w.transform.rotation.yaw),
+            )
+            if _signed_yaw_delta_deg(yaw0, best.transform.rotation.yaw) < -15.0:
+                return best.transform.location
+        return _probe(1.0)
+
+    # straight (default): smallest heading change, else forward probe
+    if candidates:
+        best = min(
+            candidates,
+            key=lambda w: _yaw_delta_deg(w.transform.rotation.yaw, yaw0),
+        )
+        if _yaw_delta_deg(best.transform.rotation.yaw, yaw0) <= 45.0:
+            return best.transform.location
+
+    loc = start_wp.transform.location
+    fwd = start_wp.transform.get_forward_vector()
+    probe = carla.Location(
+        loc.x + fwd.x * distance,
+        loc.y + fwd.y * distance,
+        loc.z,
+    )
+    end_wp = world.get_map().get_waypoint(
+        probe, project_to_road=True, lane_type=carla.LaneType.Driving
+    )
+    if end_wp is not None:
+        return end_wp.transform.location
+    if candidates:
+        return best.transform.location
+    return probe
+
+
 class TargetVehicle(Agent):
     def __init__(self, world, agent_name, agent_script, lane_wps, agent_manager, queue) -> None:
         self.name = agent_name
@@ -48,19 +128,13 @@ class TargetVehicle(Agent):
 
         # Set up the user's agent, and the timer to avoid freezing the simulation
         ego = os.environ.get("LASER_EGO", "interfuser").lower()
-        if ego == "interfuser":
-            from team_code.interfuser_agent import InterfuserAgent
-            self.agent_instance = InterfuserAgent('leaderboard/team_code/interfuser_config.py')
-        elif ego == "transfuser":
-            from submission_agent import HybridAgent
-            ckpt = os.environ.get(
-                "TRANSFUSER_CKPT",
-                os.path.expanduser("~/scratch/transfuser/model_ckpt/models_2022/transfuser"),
-            )
-            self.agent_instance = HybridAgent(ckpt)
-        else:
-            raise ValueError(f"Unknown LASER_EGO={ego}")
-        # Set target location
+        self._ego_mode = ego
+        self._idm_controller = None
+        self._plant2_controller = None
+        self._tfv6_controller = None
+        self._simlingo_controller = None
+        self._agent = None
+        self.agent_instance = None
 
         init_state = agent_script['init_state']
         l = init_state[0] - 1
@@ -70,10 +144,33 @@ class TargetVehicle(Agent):
         wp = self.init_wp
         print(wp)
 
-        # Default: straight ahead on the spawn lane (same as red_light / highway scenes).
-        # Optional VUT.route.destination is supported for custom experiments but turn
-        # scenarios should not depend on it — ego is driven by TransFuser/Interfuser.
-        end_loc = lane_wps[l].next(50)[0].transform.location
+        # Stock LASER derives the mission from the road anchor, not script.json:
+        # spawn at lane_wps[l].previous(abs(init_state.x)), then route to
+        # lane_wps[l].next(50)[0]. Keep that exact rule for straight scenarios.
+        # The added junction scenarios extend it only by selecting the requested
+        # left/right branch at the same distance. This is policy-independent:
+        # every ego receives the same gps_route and world-coordinate route.
+        maneuver = getattr(agent_manager, "ego_maneuver", "straight") or "straight"
+        # Stock default 50 m; T04HardBrake sets LASER_ROUTE_LOOKAHEAD_M=160 to
+        # match scenario_hard_brake.yaml corridor length.
+        look_ahead = float(os.environ.get("LASER_ROUTE_LOOKAHEAD_M", "50"))
+        if maneuver == "straight":
+            nxt = lane_wps[l].next(look_ahead)
+            if not nxt:
+                raise RuntimeError(
+                    f"stock ego route: lane_wps[{l}].next({look_ahead}) empty"
+                )
+            end_loc = nxt[0].transform.location
+            route_mode = "stock_lane_next"
+        else:
+            end_loc = ego_route_end_location(
+                world, lane_wps[l], look_ahead, maneuver=maneuver
+            )
+            route_mode = "stock_distance_maneuver_branch"
+        print(
+            f"VUT route end=({end_loc.x:.1f},{end_loc.y:.1f},{end_loc.z:.1f}) "
+            f"maneuver={maneuver} look_ahead={look_ahead:.0f}m mode={route_mode} ego={ego}"
+        )
         route_cfg = agent_script.get("route") or {}
         dest = route_cfg.get("destination")
         if dest is not None and len(dest) >= 2:
@@ -95,32 +192,69 @@ class TargetVehicle(Agent):
         )
         CarlaDataProvider.set_ego_route(convert_transform_to_location(self.route))
 
-        self.agent_instance.set_global_plan(gps_route, self.route)
-
         CarlaDataProvider.get_world().tick()
 
         debug_mode = False
         if debug_mode:
             self._draw_waypoints(world, self.route, vertical_shift=1.0, persistency=50000.0)
 
+        if ego == "idm":
+            from laser.target_vehicle.idm_ego import IDMEgoController, IDMParams
+            mobil_lane_ids = {
+                wp.lane_id for wp in lane_wps[: max(1, agent_manager.driving_lane_num)]
+            }
+            self._idm_controller = IDMEgoController(
+                self.carla_actor,
+                self.route,
+                params=IDMParams.from_env(),
+                mobil_lane_ids=mobil_lane_ids,
+            )
+        elif ego in ("plant2", "plant"):
+            from laser.target_vehicle.plant2_ego import PlanT2EgoController
+            self._ego_mode = "plant2"
+            self._plant2_controller = PlanT2EgoController(
+                self.carla_actor, self.route, seed=int(os.environ.get("PLANT2_SEED", "0"))
+            )
+        elif ego in ("tfv6", "transfuser_v6", "transfuser-v6"):
+            from laser.target_vehicle.tfv6_ego import TFv6EgoController
+            self._ego_mode = "tfv6"
+            self._tfv6_controller = TFv6EgoController(
+                self.carla_actor,
+                self.route,
+                seed=int(os.environ.get("TFV6_SEED", "0")),
+                maneuver=maneuver,
+            )
+        elif ego in ("simlingo", "laser_simlingo"):
+            from laser.target_vehicle.simlingo_ego import SimLingoEgoController
+            self._ego_mode = "simlingo"
+            self._simlingo_controller = SimLingoEgoController(
+                self.carla_actor,
+                self.route,
+                seed=int(os.environ.get("SIMLINGO_SEED", "0")),
+            )
+        elif ego == "interfuser":
+            from team_code.interfuser_agent import InterfuserAgent
+            self.agent_instance = InterfuserAgent('leaderboard/team_code/interfuser_config.py')
+            self.agent_instance.set_global_plan(gps_route, self.route)
+            self.agent_instance._init()
+            self.agent_instance.sensor_interface = SensorInterface()
+            self._agent = AgentWrapper(self.agent_instance)
+            self._agent.setup_sensors(self.carla_actor, False)
+        elif ego == "transfuser":
+            from submission_agent import HybridAgent
+            ckpt = os.environ.get(
+                "TRANSFUSER_CKPT",
+                os.path.expanduser("~/scratch/transfuser/model_ckpt/models_2022/transfuser"),
+            )
+            self.agent_instance = HybridAgent(ckpt)
+            self.agent_instance.set_global_plan(gps_route, self.route)
+            self.agent_instance._init()
+            self.agent_instance.sensor_interface = SensorInterface()
+            self._agent = AgentWrapper(self.agent_instance)
+            self._agent.setup_sensors(self.carla_actor, False)
+        else:
+            raise ValueError(f"Unknown LASER_EGO={ego}")
 
-        self.agent_instance._init()
-        self.agent_instance.sensor_interface = SensorInterface()
-
-        self._agent = AgentWrapper(self.agent_instance)
-        self._agent.setup_sensors(self.carla_actor, False)
-        # self.camera = sensor(self, sensor_args, self.carla_actor, carla.Transform())
-        # self.camera.sensor.listen(lambda data, agent=self: Agent.sensor_callback(data, queue, agent))
-    
-
-        # sync state
-        # CarlaDataProvider.get_world().tick()
-
-
-        # Night mode
-        # if config.weather.sun_altitude_angle < 0.0:
-        #     for vehicle in scenario.ego_vehicles:
-        #         vehicle.set_light_state(carla.VehicleLightState(self._vehicle_lights))
         self.collision_sensor = CollisionSensor(queue, self)
 
         self._llm_agent = None
@@ -129,18 +263,17 @@ class TargetVehicle(Agent):
         pass
 
     def on_tick(self, dt):
-        ego_action = self._agent()
-        # try:
-            # ego_action = self._agent()
-
-        # Special exception inside the agent that isn't caused by the agent
-        # except SensorReceivedNoData as e:
-            # return
-
-        # except Exception as e:
-            # raise AgentError(e)
-
-        print(ego_action)
+        if self._ego_mode == "idm":
+            ego_action = self._idm_controller.run_step(dt)
+        elif self._ego_mode == "plant2":
+            ego_action = self._plant2_controller.run_step(dt)
+        elif self._ego_mode == "tfv6":
+            ego_action = self._tfv6_controller.run_step(dt)
+        elif self._ego_mode == "simlingo":
+            ego_action = self._simlingo_controller.run_step(dt)
+        else:
+            ego_action = self._agent()
+            print(ego_action)
 
         self.carla_actor.apply_control(ego_action)
 
@@ -183,7 +316,18 @@ class TargetVehicle(Agent):
 
         # lane_id, transform, speed, acceleration = self._decision_interpreter_inst.get_self_obs_info()
         # print(f"{self.name}: {transform}")
-        lane_num = self.lane_id2lane_num[lane_id]
+        # Scripted corridor is only the spawn lane_wps (e.g. -1/-2). If ego
+        # leaves that (junction, opposite lanes, off-road project), CARLA
+        # lane_id is unknown — don't crash the LLM tick.
+        if lane_id not in self.lane_id2lane_num:
+            print(
+                f"warning: VUT unknown carla lane_id={lane_id} "
+                f"known={self.lane_id2lane_num} loc=({transform.location.x:.1f},"
+                f"{transform.location.y:.1f})"
+            )
+            lane_num = next(iter(self.lane_id2lane_num.values()), 1)
+        else:
+            lane_num = self.lane_id2lane_num[lane_id]
         
         lane_wp = self.lane_wps[0]
         transform_wp = lane_wp.transform
@@ -218,4 +362,25 @@ class TargetVehicle(Agent):
 
     def handle_decisions(self, decisions, dt):
         pass
+
+    def destroy(self):
+        if self._tfv6_controller is not None:
+            try:
+                self._tfv6_controller.close()
+            except Exception as exc:  # noqa: BLE001
+                print(f"tfv6 close failed: {exc}")
+            self._tfv6_controller = None
+        if self._simlingo_controller is not None:
+            try:
+                self._simlingo_controller.close()
+            except Exception as exc:  # noqa: BLE001
+                print(f"simlingo close failed: {exc}")
+            self._simlingo_controller = None
+        if self._plant2_controller is not None:
+            try:
+                self._plant2_controller.close()
+            except Exception as exc:  # noqa: BLE001
+                print(f"plant2 close failed: {exc}")
+            self._plant2_controller = None
+        super().destroy()
 

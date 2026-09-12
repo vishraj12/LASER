@@ -1,34 +1,29 @@
 {
 	"VUT": {
-		"type": "VUT", 
-		"model": "car", 
-		"init_state": [1, 40, 5]
-	}, 
+		"type": "VUT",
+		"model": "car",
+		"init_state": [2, 40, 5]
+	},
 	"overtaking_car": {
-		"type": "agent", 
-		"model": "car", 
-		"init_state": [2, 40, 5], 
+		"type": "agent",
+		"model": "car",
+		"init_state": [3, 44, 9],
 		"steps": [
 			{
-				"action": "accelerate to overtake", 
-				"termination_condition": "Your longitudinal position is ahead of VUT.", 
-				"reason": "The car needs to match and then exceed the speed of the VUT to overtake."
-			}, 
-			{
-				"action": "merge into leftmost lane ahead of the VUT", 
-                "termination_condition": "when the car is in leftmost lane ahead of the VUT", 
-                "reason": "The car needs to complete the overtaking maneuver by positioning itself in front of the VUT."
-			}, 
-			{
-				"action": "slow down", 
-                "termination_condition": "when the car's speed is reduced to 2 m/s", 
-                "reason": "The car slows down, affecting the VUT's driving behavior."
+				"action": "Stay in lane 3. Accelerate up to about 9 to 10 m/s only until you are about 5 to 6 m ahead of the VUT. Do not pull farther than about 6 m ahead. Do not change lanes yet.",
+				"termination_condition": "You are about 5 to 6 m ahead of the VUT (not more than about 6 m) and still in lane 3.",
+				"reason": "Catch up for a close cut-in without opening a huge gap (station within 10 m)."
 			},
-            {
-                "action": "Maintain 5 m/s speed in lane 1", 
-                "termination_condition": "Hold for the next 10 seconds", 
-                "reason": ""
-            }
+			{
+				"action": "Immediately merge left into the center lane while about 5 to 6 m ahead of the VUT. Do not accelerate to open more gap.",
+				"termination_condition": "You are in the center lane and about 5 to 6 m ahead of the VUT.",
+				"reason": "Lane-change into the ego lane while still ahead (tight cut-in)."
+			},
+			{
+				"action": "After cutting in, drive at a nominal cruise about 7 to 9 m/s in the center lane (near the VUT's speed). Do not slow to a crawl. Do not change lanes.",
+				"termination_condition": "Hold for the next 10 seconds",
+				"reason": "Post-merge nominal speed — not abandoned or crawling."
+			}
 		]
 	}
 }

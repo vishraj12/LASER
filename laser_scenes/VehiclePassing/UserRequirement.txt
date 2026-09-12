@@ -1,0 +1,18 @@
+Scene description:
+Overtake / vehicle_passing (orchestration overtake.yaml +
+metrics/SCENARIOS_AND_VALIDATION.md).
+The VUT cruises behind a same-lane stopped blocker; oncoming
+traffic approaches in the opposite lane. The VUT must pass using the free
+lane without colliding with either vehicle.
+
+Road environment description (table pin):
+    Town01, road 8, 2 lanes (two-way), lane width 4.0 m
+    CARLA stand-in road flag: T01Overtake
+    lane 1 = northbound (+1, ego / blocker), lane 2 = southbound (-1, oncoming)
+
+Staging (LASER-native; matches working T04 VehiclePassing pattern):
+    - Ego (lane 1): 12 m/s, ~5 m behind anchor
+    - Blocker (lane 1): ~20 m ahead of anchor → ego–blocker gap ~25 m;
+      spawn already stopped (0 m/s), hold. No timed cruise→brake — LLM
+      agents have no clock, so multi-step wall-clock exits fail.
+    - Oncoming (lane 2): ~75 m upstream, 8 m/s toward ego
