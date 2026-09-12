@@ -74,10 +74,30 @@ class TFv6BridgeClient:
         os.unlink(sock_path)
         self._sock_path = sock_path
 
-        worker = self.root / "scenario_orchestration" / "tfv6_bridge_worker.py"
+        # Prefer LASER-vendored worker + policy overlay so stock tfv6 pins work
+        # without committing into INPUTrrr0/TFv6.
+        laser_repo = Path(__file__).resolve().parents[2]
+        overlay = laser_repo / "scenario_orchestration" / "overlays" / "tfv6"
+        overlay_worker = overlay / "scenario_orchestration" / "tfv6_bridge_worker.py"
+        stock_worker = self.root / "scenario_orchestration" / "tfv6_bridge_worker.py"
+        if overlay_worker.is_file():
+            worker = overlay_worker
+            # Overlay first so scenario_orchestration.policy is the fixed copy.
+            pythonpath = os.pathsep.join([str(overlay), str(self.root)])
+            print(f"TFv6 bridge overlay: {overlay}")
+        elif stock_worker.is_file():
+            worker = stock_worker
+            pythonpath = str(self.root)
+        else:
+            raise RuntimeError(
+                "tfv6_bridge_worker.py not found. Expected LASER overlay at "
+                f"{overlay_worker} or stock worker at {stock_worker}. "
+                "Run scripts/bootstrap_tfv6_venv.sh after TFV6_ROOT is set."
+            )
+
         env = os.environ.copy()
         # Keep the worker on the 3.10 tree; drop LASER 3.8 PYTHONPATH noise.
-        env["PYTHONPATH"] = str(self.root)
+        env["PYTHONPATH"] = pythonpath
         env["PIP_CONFIG_FILE"] = "/dev/null"
         # Always set (do not setdefault): frozen-red LASER scenes need creeping.
         env["LEAD_CLOSED_LOOP_CONFIG"] = os.environ.get(

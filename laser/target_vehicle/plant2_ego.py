@@ -149,6 +149,23 @@ class PlanT2EgoController:
             s = str(sub)
             if sub.is_dir() and s not in sys.path:
                 sys.path.insert(0, s)
+        # Prefer LASER's policy overlay (torch/device/index fixes) when present so
+        # a stock third_party/plant2 pin stays runnable without upstream write access.
+        # Insert last so it wins over plant2's own scenario_orchestration/policy.py.
+        laser_repo = Path(__file__).resolve().parents[2]
+        overlay_policy = (
+            laser_repo
+            / "scenario_orchestration"
+            / "overlays"
+            / "plant2"
+            / "scenario_orchestration"
+        )
+        if (overlay_policy / "policy.py").is_file():
+            s = str(overlay_policy)
+            if s in sys.path:
+                sys.path.remove(s)
+            sys.path.insert(0, s)
+            print(f"PlanT2 policy overlay: {overlay_policy}")
 
     def _load_policy(self) -> None:
         import policy as plant2_policy  # noqa: WPS433 — plant2 entry point
