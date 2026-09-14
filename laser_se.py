@@ -297,16 +297,21 @@ def init_world():
         driving_lane_num = 2
         setup_junction189_lights(carla_world, ego_approach, cross_approach)
     elif args.road == 'T10J189Right':
-        # Figure-matched right-turn: ego at south stop line (RED) turns right onto
-        # eastbound; through traffic already moving on green (W→E).
+        # Right turn at junction 189. CARLA is left-handed: the ego heads +y
+        # (yaw 90), so its RIGHT is -x, and the right-turn connector (onto road
+        # 19, yaw 180) leaves only from the OUTER lane at x=-52.3; the inner lane
+        # at x=-48.8 offers straight and LEFT (road 375 -> road 20, eastbound),
+        # which is what this mode used to turn into. A right turn joins the
+        # near-side westbound lane (y~13), so the stream it conflicts with is
+        # westbound through traffic arriving from the ego's left (+x); it starts
+        # east of the box, 20 m before the anchor below (script init_state -20).
         # Maneuver comes from this road flag (not VUT.route in script.json).
         ego_maneuver = "right"
         carla_world = client.load_world("Town10HD_Opt")
         carla_map = carla_world.get_map()
         # Ego closer to the stop line than red-light (figure: at the line).
-        ego_approach = get_wp(-48.8, -5.0, 0)
-        # Through traffic further west so it is already closing on the box.
-        cross_approach = get_wp(-85.0, 24.5, 0)
+        ego_approach = get_wp(-52.3, -5.0, 0)
+        cross_approach = get_wp(0.0, 13.1, 0)
         if ego_approach.is_junction or cross_approach.is_junction:
             print(f"WARN T10J189Right: approach wp in junction "
                   f"(ego_junc={ego_approach.is_junction}, cross_junc={cross_approach.is_junction})")

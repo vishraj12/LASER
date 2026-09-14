@@ -40,6 +40,13 @@ def ego_route_end_location(world, start_wp, distance, maneuver="straight"):
     Same role as stock LASER ``wp.next(d)[0]`` (automatic mission goal, not
     scripted controls). At junction forks, ``maneuver`` selects among
     successors: ``straight`` / ``left`` / ``right``.
+
+    CARLA is left-handed: yaw grows clockwise seen from above, so a successor
+    whose yaw is GREATER than the start's is to the RIGHT (the global route
+    planner labels that turn ``RoadOption.RIGHT``). The branches below used to
+    test the opposite sign, so on Town10HD junction 189 ``right`` picked the
+    left-turn connector and ``left`` found no candidate, fell back to the
+    lateral probe and routed a 525 m loop that began with a right turn.
     """
     maneuver = (maneuver or "straight").lower()
     yaw0 = start_wp.transform.rotation.yaw
@@ -62,21 +69,21 @@ def ego_route_end_location(world, start_wp, distance, maneuver="straight"):
 
     if maneuver == "left":
         if candidates:
-            best = max(
-                candidates,
-                key=lambda w: _signed_yaw_delta_deg(yaw0, w.transform.rotation.yaw),
-            )
-            if _signed_yaw_delta_deg(yaw0, best.transform.rotation.yaw) > 15.0:
-                return best.transform.location
-        return _probe(-1.0)
-
-    if maneuver == "right":
-        if candidates:
             best = min(
                 candidates,
                 key=lambda w: _signed_yaw_delta_deg(yaw0, w.transform.rotation.yaw),
             )
             if _signed_yaw_delta_deg(yaw0, best.transform.rotation.yaw) < -15.0:
+                return best.transform.location
+        return _probe(-1.0)
+
+    if maneuver == "right":
+        if candidates:
+            best = max(
+                candidates,
+                key=lambda w: _signed_yaw_delta_deg(yaw0, w.transform.rotation.yaw),
+            )
+            if _signed_yaw_delta_deg(yaw0, best.transform.rotation.yaw) > 15.0:
                 return best.transform.location
         return _probe(1.0)
 
