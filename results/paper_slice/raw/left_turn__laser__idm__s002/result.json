@@ -1,0 +1,130 @@
+{
+  "schema_version": "1.0.0",
+  "experiment_id": "left_turn__laser__idm__s002",
+  "status": "success",
+  "scenario_family": "left_turn",
+  "algorithm": "laser",
+  "policy": "idm",
+  "seed": 2,
+  "metrics": {
+    "scenario_success": true,
+    "scenario_realized": true,
+    "collision": false,
+    "scenario_duration": 19.950000297278166
+  },
+  "method_metrics": {
+    "command": [
+      "/home/visraj12/scratch/LASER/.venv/bin/python",
+      "/scratch/visraj12/scenario_orchestration/third_party/laser/laser_se.py",
+      "-r",
+      "T10J189Left",
+      "-s",
+      "/scratch/visraj12/scenario_orchestration/third_party/laser/laser_scenes/UnprotectedLeftTurn/script.json",
+      "-t",
+      "20",
+      "--host",
+      "127.0.0.1",
+      "-p",
+      "2000"
+    ],
+    "evaluation_horizon_s": 20,
+    "experiment_id": "left_turn__laser__idm__s002",
+    "log_path": "laser.log",
+    "observation_space_note": "state",
+    "policy_mode": "native",
+    "policy_requested": "idm",
+    "policy_resolved": "idm",
+    "requested_native_id": "laser_unprotected_left",
+    "requested_parameters": {
+      "road": "T10J189Left",
+      "town": "Town10HD_Opt"
+    },
+    "returncode": 0,
+    "road": "T10J189Left",
+    "scenario_family_resolved": "left_turn",
+    "script": "laser_scenes/UnprotectedLeftTurn/script.json",
+    "se_record_dir": "se_records/0911-19-16-14",
+    "seed": 2,
+    "sim_duration_s": 20.0,
+    "timeout_s": 900.0,
+    "token_usage": {
+      "SW": null,
+      "oncoming_straight": {
+        "input_tokens": 32151,
+        "output_tokens": 7378,
+        "total_tokens": 39529
+      }
+    },
+    "wall_time_s": 117.986
+  },
+  "trace_path": null,
+  "wall_time_s": 118.1103667570278,
+  "cpu_time_s": 7.636923999999993,
+  "git_revisions": {
+    "central": {
+      "commit": "2b43e37b78c1049205239451bec0ba5953f06e8f",
+      "dirty": true,
+      "path": "/scratch/visraj12/scenario_orchestration"
+    },
+    "submodules": {
+      "fuzzed_execution": {
+        "initialized": false,
+        "commit": null,
+        "dirty": null
+      },
+      "idm": {
+        "initialized": false,
+        "commit": null,
+        "dirty": null
+      },
+      "laser": {
+        "initialized": true,
+        "commit": "aedd0a2f22aa5414ad0aed9d2c598de931d3e7b6",
+        "dirty": true
+      },
+      "orchestration": {
+        "initialized": true,
+        "commit": "bea81503da5dea5ffaa2a8d239c9856913c69fd4",
+        "dirty": false
+      },
+      "orchestrator_highway": {
+        "initialized": false,
+        "commit": null,
+        "dirty": null
+      },
+      "osc2runner": {
+        "initialized": false,
+        "commit": null,
+        "dirty": null
+      },
+      "plant2": {
+        "initialized": true,
+        "commit": "85961c03db8528b02019840affb5c3b130fb3d1b",
+        "dirty": true
+      },
+      "prosim": {
+        "initialized": false,
+        "commit": null,
+        "dirty": null
+      },
+      "simlingo": {
+        "initialized": false,
+        "commit": null,
+        "dirty": null
+      },
+      "tfv6": {
+        "initialized": true,
+        "commit": "bfe14ceaffa340f5af36448c4da0b1640ea34dec",
+        "dirty": true
+      },
+      "transfuser": {
+        "initialized": false,
+        "commit": null,
+        "dirty": null
+      }
+    }
+  },
+  "reason": null,
+  "timestamp": "2026-09-11T23:15:45+00:00",
+  "artifacts": {}
+}

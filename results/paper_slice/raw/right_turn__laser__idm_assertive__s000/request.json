@@ -1,0 +1,42 @@
+{
+  "schema_version": "1.0.0",
+  "experiment_id": "right_turn__laser__idm_assertive__s000",
+  "scenario_family": "right_turn",
+  "semantic_id": "right_turn",
+  "algorithm": "laser",
+  "seed": 0,
+  "evaluation": {
+    "horizon_s": 20,
+    "target_event": "right_turn_interaction",
+    "success_criteria": [
+      "scenario_realized",
+      "no_collision"
+    ],
+    "tick_rate_hz": 10
+  },
+  "implementation": {
+    "family": "right_turn",
+    "method": "laser",
+    "native_id": "laser_right_turn_conflict",
+    "parameters": {
+      "town": "Town10HD_Opt",
+      "road": "T10J189Right"
+    }
+  },
+  "metrics": [
+    "scenario_realized",
+    "time_to_event",
+    "collision",
+    "near_collision"
+  ],
+  "parameters": {
+    "target_interaction": "the ego right turn conflicts with a crossing actor",
+    "preconditions": [
+      "ego_approaches_intersection",
+      "ego_route_turns_right",
+      "crossing_actor_present"
+    ],
+    "description": "The ego vehicle performs a right turn at an intersection while a crossing actor occupies the conflict zone."
+  },
+  "output_dir": "/scratch/visraj12/scenario_orchestration/results/raw/right_turn__laser__idm_assertive__s000"
+}

@@ -1,0 +1,63 @@
+{
+  "method_metrics": {
+    "command": [
+      "/home/visraj12/scratch/LASER/.venv/bin/python",
+      "/scratch/visraj12/scenario_orchestration/third_party/laser/laser_se.py",
+      "-r",
+      "T04VehiclePassing",
+      "-s",
+      "/scratch/visraj12/scenario_orchestration/third_party/laser/laser_scenes/VehiclePassing/script.json",
+      "-t",
+      "25",
+      "--host",
+      "127.0.0.1",
+      "-p",
+      "2000"
+    ],
+    "evaluation_horizon_s": 25,
+    "experiment_id": "overtake__laser__idm__s005",
+    "idm_mobil": true,
+    "log_path": "laser.log",
+    "observation_space_note": "state",
+    "policy_mode": "native",
+    "policy_requested": "idm",
+    "policy_resolved": "idm",
+    "requested_native_id": "vehicle_passing",
+    "requested_parameters": {
+      "road": "T04VehiclePassing",
+      "town": "Town04"
+    },
+    "returncode": 0,
+    "road": "T04VehiclePassing",
+    "scenario_family_resolved": "overtake",
+    "script": "laser_scenes/VehiclePassing/script.json",
+    "se_record_dir": "se_records/0912-16-32-38",
+    "seed": 5,
+    "sim_duration_s": 25.0,
+    "timeout_s": 900.0,
+    "token_usage": {
+      "SW": null,
+      "blocking_vehicle": {
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "total_tokens": 0
+      },
+      "oncoming_vehicle": {
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "total_tokens": 0
+      }
+    },
+    "wall_time_s": 17.16
+  },
+  "metrics": {
+    "collision": true,
+    "scenario_duration": 24.950000371783972,
+    "scenario_realized": true,
+    "scenario_success": false,
+    "time_to_event": 7.374284992925823
+  },
+  "reason": null,
+  "status": "success",
+  "trace_path": null
+}

@@ -1,0 +1,21 @@
+{
+  "schema_version": "1.0.0",
+  "experiment_id": "overtake__laser__idm_conservative__s002",
+  "name": "idm_conservative",
+  "interface": "ego_policy_v1",
+  "implementation": "idm.policy.IDMPolicy",
+  "observation_space": "state",
+  "action_space": "control",
+  "seed": 2,
+  "repository": "third_party/idm",
+  "entry_point": "scenario_orchestration/policy.py",
+  "checkpoint": null,
+  "parameters": {
+    "desired_speed_mps": 6.0,
+    "time_headway_s": 2.5,
+    "min_gap_m": 4.0,
+    "max_accel_mps2": 1.0,
+    "comfort_decel_mps2": 1.5
+  },
+  "requires": []
+}

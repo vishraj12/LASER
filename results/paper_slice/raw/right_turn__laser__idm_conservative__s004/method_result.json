@@ -1,0 +1,56 @@
+{
+  "method_metrics": {
+    "command": [
+      "/home/visraj12/scratch/LASER/.venv/bin/python",
+      "/scratch/visraj12/scenario_orchestration/third_party/laser/laser_se.py",
+      "-r",
+      "T10J189Right",
+      "-s",
+      "/scratch/visraj12/scenario_orchestration/third_party/laser/laser_scenes/RightTurn/script.json",
+      "-t",
+      "20",
+      "--host",
+      "127.0.0.1",
+      "-p",
+      "2000"
+    ],
+    "evaluation_horizon_s": 20,
+    "experiment_id": "right_turn__laser__idm_conservative__s004",
+    "log_path": "laser.log",
+    "observation_space_note": "state",
+    "policy_mode": "native",
+    "policy_requested": "idm_conservative",
+    "policy_resolved": "idm",
+    "requested_native_id": "laser_right_turn_conflict",
+    "requested_parameters": {
+      "road": "T10J189Right",
+      "town": "Town10HD_Opt"
+    },
+    "returncode": 0,
+    "road": "T10J189Right",
+    "scenario_family_resolved": "right_turn",
+    "script": "laser_scenes/RightTurn/script.json",
+    "se_record_dir": "se_records/0912-15-48-15",
+    "seed": 4,
+    "sim_duration_s": 20.0,
+    "timeout_s": 900.0,
+    "token_usage": {
+      "SW": null,
+      "crossing_vehicle": {
+        "input_tokens": 29360,
+        "output_tokens": 6619,
+        "total_tokens": 35979
+      }
+    },
+    "wall_time_s": 99.775
+  },
+  "metrics": {
+    "collision": false,
+    "scenario_duration": 19.950000297278166,
+    "scenario_realized": true,
+    "scenario_success": true
+  },
+  "reason": null,
+  "status": "success",
+  "trace_path": null
+}

@@ -1,0 +1,41 @@
+{
+  "schema_version": "1.0.0",
+  "experiment_id": "red_light__laser__tfv6__s000",
+  "scenario_family": "red_light",
+  "semantic_id": "red_light",
+  "algorithm": "laser",
+  "seed": 0,
+  "evaluation": {
+    "horizon_s": 20,
+    "target_event": "red_light_interaction",
+    "success_criteria": [
+      "scenario_realized",
+      "no_collision"
+    ],
+    "tick_rate_hz": 10
+  },
+  "implementation": {
+    "family": "red_light",
+    "method": "laser",
+    "native_id": "laser_red_light_violation",
+    "parameters": {
+      "town": "Town05"
+    }
+  },
+  "metrics": [
+    "scenario_realized",
+    "time_to_event",
+    "collision",
+    "near_collision"
+  ],
+  "parameters": {
+    "target_interaction": "another actor violates the signal and conflicts with the ego path",
+    "preconditions": [
+      "ego_approaches_signalised_intersection",
+      "ego_has_right_of_way",
+      "conflicting_actor_present"
+    ],
+    "description": "The ego vehicle crosses a signalised intersection with a green light while another actor enters the intersection against a red light."
+  },
+  "output_dir": "/scratch/visraj12/scenario_orchestration/results/raw/red_light__laser__tfv6__s000"
+}

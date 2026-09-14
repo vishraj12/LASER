@@ -1,0 +1,23 @@
+scenario,policy,success_pct,n,seeds_failed
+cut_in,idm,100,5,
+cut_in,idm_assertive,100,5,
+cut_in,idm_conservative,100,5,
+cut_in,plant2,80,5,0
+cut_in,tfv6,100,5,
+lane_change,idm,0,5,0 1 2 4 5
+lane_change,idm_assertive,100,5,
+lane_change,idm_conservative,100,5,
+left_turn,idm,100,5,
+left_turn,idm_assertive,100,5,
+left_turn,idm_conservative,100,5,
+overtake,idm,0,5,0 1 2 4 5
+overtake,idm_assertive,0,5,0 1 2 4 5
+overtake,idm_conservative,0,5,0 1 2 4 5
+red_light,idm,100,5,
+red_light,idm_assertive,0,5,0 1 2 4 5
+red_light,idm_conservative,100,5,
+red_light,plant2,100,5,
+red_light,tfv6,100,5,
+right_turn,idm,100,5,
+right_turn,idm_assertive,100,5,
+right_turn,idm_conservative,100,5,

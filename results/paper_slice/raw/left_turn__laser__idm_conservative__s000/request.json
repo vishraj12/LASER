@@ -1,0 +1,42 @@
+{
+  "schema_version": "1.0.0",
+  "experiment_id": "left_turn__laser__idm_conservative__s000",
+  "scenario_family": "left_turn",
+  "semantic_id": "left_turn",
+  "algorithm": "laser",
+  "seed": 0,
+  "evaluation": {
+    "horizon_s": 20,
+    "target_event": "left_turn_interaction",
+    "success_criteria": [
+      "scenario_realized",
+      "no_collision"
+    ],
+    "tick_rate_hz": 10
+  },
+  "implementation": {
+    "family": "left_turn",
+    "method": "laser",
+    "native_id": "laser_unprotected_left",
+    "parameters": {
+      "town": "Town10HD_Opt",
+      "road": "T10J189Left"
+    }
+  },
+  "metrics": [
+    "scenario_realized",
+    "time_to_event",
+    "collision",
+    "near_collision"
+  ],
+  "parameters": {
+    "target_interaction": "the ego left turn conflicts with an oncoming actor",
+    "preconditions": [
+      "ego_approaches_intersection",
+      "ego_route_turns_left",
+      "oncoming_actor_present"
+    ],
+    "description": "The ego vehicle performs an unprotected left turn across an oncoming traffic stream at an intersection."
+  },
+  "output_dir": "/scratch/visraj12/scenario_orchestration/results/raw/left_turn__laser__idm_conservative__s000"
+}

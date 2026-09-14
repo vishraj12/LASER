@@ -1,0 +1,135 @@
+{
+  "schema_version": "1.0.0",
+  "experiment_id": "lane_change__laser__idm_assertive__s000",
+  "status": "success",
+  "scenario_family": "lane_change",
+  "algorithm": "laser",
+  "policy": "idm_assertive",
+  "seed": 0,
+  "metrics": {
+    "scenario_success": true,
+    "scenario_realized": true,
+    "collision": false,
+    "scenario_duration": 19.950000297278166
+  },
+  "method_metrics": {
+    "command": [
+      "/home/visraj12/scratch/LASER/.venv/bin/python",
+      "/scratch/visraj12/scenario_orchestration/third_party/laser/laser_se.py",
+      "-r",
+      "T04HardBrake",
+      "-s",
+      "/scratch/visraj12/scenario_orchestration/third_party/laser/laser_scenes/LaneChanging/script.json",
+      "-t",
+      "20",
+      "--host",
+      "127.0.0.1",
+      "-p",
+      "2000"
+    ],
+    "evaluation_horizon_s": 20,
+    "experiment_id": "lane_change__laser__idm_assertive__s000",
+    "idm_mobil": true,
+    "log_path": "laser.log",
+    "observation_space_note": "state",
+    "policy_mode": "native",
+    "policy_requested": "idm_assertive",
+    "policy_resolved": "idm",
+    "requested_native_id": "laser_blocked_lane_change",
+    "requested_parameters": {
+      "town": "Town04"
+    },
+    "returncode": 0,
+    "road": "T04HardBrake",
+    "scenario_family_resolved": "lane_change",
+    "script": "laser_scenes/LaneChanging/script.json",
+    "se_record_dir": "se_records/0911-20-52-51",
+    "seed": 0,
+    "sim_duration_s": 20.0,
+    "timeout_s": 900.0,
+    "token_usage": {
+      "SW": null,
+      "adjacent_lane_vehicle": {
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "total_tokens": 0
+      },
+      "slow_leading_vehicle": {
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "total_tokens": 0
+      }
+    },
+    "wall_time_s": 17.22
+  },
+  "trace_path": null,
+  "wall_time_s": 17.33309196215123,
+  "cpu_time_s": 5.4558830000000285,
+  "git_revisions": {
+    "central": {
+      "commit": "2b43e37b78c1049205239451bec0ba5953f06e8f",
+      "dirty": true,
+      "path": "/scratch/visraj12/scenario_orchestration"
+    },
+    "submodules": {
+      "fuzzed_execution": {
+        "initialized": false,
+        "commit": null,
+        "dirty": null
+      },
+      "idm": {
+        "initialized": false,
+        "commit": null,
+        "dirty": null
+      },
+      "laser": {
+        "initialized": true,
+        "commit": "aedd0a2f22aa5414ad0aed9d2c598de931d3e7b6",
+        "dirty": true
+      },
+      "orchestration": {
+        "initialized": true,
+        "commit": "bea81503da5dea5ffaa2a8d239c9856913c69fd4",
+        "dirty": false
+      },
+      "orchestrator_highway": {
+        "initialized": false,
+        "commit": null,
+        "dirty": null
+      },
+      "osc2runner": {
+        "initialized": false,
+        "commit": null,
+        "dirty": null
+      },
+      "plant2": {
+        "initialized": true,
+        "commit": "85961c03db8528b02019840affb5c3b130fb3d1b",
+        "dirty": true
+      },
+      "prosim": {
+        "initialized": false,
+        "commit": null,
+        "dirty": null
+      },
+      "simlingo": {
+        "initialized": true,
+        "commit": "6f89208f905ac85685b0869e633fd3e0023c9c5b",
+        "dirty": true
+      },
+      "tfv6": {
+        "initialized": true,
+        "commit": "bfe14ceaffa340f5af36448c4da0b1640ea34dec",
+        "dirty": true
+      },
+      "transfuser": {
+        "initialized": false,
+        "commit": null,
+        "dirty": null
+      }
+    }
+  },
+  "reason": null,
+  "timestamp": "2026-09-12T00:52:37+00:00",
+  "artifacts": {}
+}

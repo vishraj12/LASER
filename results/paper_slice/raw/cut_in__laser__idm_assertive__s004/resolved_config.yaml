@@ -1,0 +1,89 @@
+experiment_id: cut_in__laser__idm_assertive__s004
+spec:
+  schema_version: 1.0.0
+  experiment_id: cut_in__laser__idm_assertive__s004
+  scenario_family: cut_in
+  algorithm: laser
+  policy: idm_assertive
+  seed: 4
+  scenario_config: /scratch/visraj12/scenario_orchestration/configs/scenario/cut_in.yaml
+  algorithm_config: /scratch/visraj12/scenario_orchestration/configs/algorithm/laser.yaml
+  policy_config: /scratch/visraj12/scenario_orchestration/configs/policy/idm_assertive.yaml
+  output_dir: /scratch/visraj12/scenario_orchestration/results/raw/cut_in__laser__idm_assertive__s004
+  tags:
+    experiment: laser_full
+scenario:
+  name: cut_in
+  semantic_id: cut_in
+  description: An actor travelling in an adjacent lane cuts into the ego lane at close
+    longitudinal range, forcing the ego vehicle to react.
+  preconditions:
+  - ego_travels_in_multilane_road
+  - adjacent_lane_actor_present
+  target_interaction: an adjacent actor cuts into the ego lane inside the ego safety
+    envelope
+  evaluation:
+    horizon_s: 15
+    target_event: cut_in_interaction
+    tick_rate_hz: 10
+    success_criteria:
+    - scenario_realized
+    - no_collision
+  metrics:
+  - scenario_realized
+  - time_to_event
+  - collision
+  - near_collision
+algorithm:
+  name: laser
+  adapter:
+    _target_: scenario_orchestration.adapters.laser.LaserAdapter
+  repository: third_party/laser
+  entry_point: scenario_orchestration/run.py
+  execution:
+    interpreter: python
+    timeout_s: 1800
+  capabilities:
+    scenario_families:
+    - red_light
+    - cut_in
+    - lane_change
+    - overtake
+    - right_turn
+    - left_turn
+    policy_interfaces:
+    - ego_policy_v1
+    observation_spaces:
+    - sensor
+    - state
+    action_spaces:
+    - control
+    - waypoints
+    closed_loop: true
+  unsupported:
+    scenario_families: {}
+    observation_spaces: {}
+  requires:
+    submodule: true
+    entry_point: true
+    python_modules: []
+policy:
+  name: idm_assertive
+  implementation: idm.policy.IDMPolicy
+  interface: ego_policy_v1
+  observation_space: state
+  action_space: control
+  description: IDM with a short headway and higher acceleration limits.
+  repository: third_party/idm
+  entry_point: scenario_orchestration/policy.py
+  parameters:
+    desired_speed_mps: 11.0
+    time_headway_s: 0.8
+    min_gap_m: 1.0
+    max_accel_mps2: 2.5
+    comfort_decel_mps2: 3.0
+  adapter:
+    _target_: scenario_orchestration.adapters.policy.PolicyAdapter
+  requires: []
+tags:
+  experiment: laser_full

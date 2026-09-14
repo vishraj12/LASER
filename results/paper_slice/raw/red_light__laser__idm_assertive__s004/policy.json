@@ -1,0 +1,21 @@
+{
+  "schema_version": "1.0.0",
+  "experiment_id": "red_light__laser__idm_assertive__s004",
+  "name": "idm_assertive",
+  "interface": "ego_policy_v1",
+  "implementation": "idm.policy.IDMPolicy",
+  "observation_space": "state",
+  "action_space": "control",
+  "seed": 4,
+  "repository": "third_party/idm",
+  "entry_point": "scenario_orchestration/policy.py",
+  "checkpoint": null,
+  "parameters": {
+    "desired_speed_mps": 11.0,
+    "time_headway_s": 0.8,
+    "min_gap_m": 1.0,
+    "max_accel_mps2": 2.5,
+    "comfort_decel_mps2": 3.0
+  },
+  "requires": []
+}

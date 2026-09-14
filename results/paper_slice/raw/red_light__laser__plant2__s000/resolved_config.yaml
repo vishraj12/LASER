@@ -1,0 +1,90 @@
+experiment_id: red_light__laser__plant2__s000
+spec:
+  schema_version: 1.0.0
+  experiment_id: red_light__laser__plant2__s000
+  scenario_family: red_light
+  algorithm: laser
+  policy: plant2
+  seed: 0
+  scenario_config: /scratch/visraj12/scenario_orchestration/configs/scenario/red_light.yaml
+  algorithm_config: /scratch/visraj12/scenario_orchestration/configs/algorithm/laser.yaml
+  policy_config: /scratch/visraj12/scenario_orchestration/configs/policy/plant2.yaml
+  output_dir: /scratch/visraj12/scenario_orchestration/results/raw/red_light__laser__plant2__s000
+  tags:
+    experiment: laser_full
+scenario:
+  name: red_light
+  semantic_id: red_light
+  description: The ego vehicle crosses a signalised intersection with a green light
+    while another actor enters the intersection against a red light.
+  preconditions:
+  - ego_approaches_signalised_intersection
+  - ego_has_right_of_way
+  - conflicting_actor_present
+  target_interaction: another actor violates the signal and conflicts with the ego
+    path
+  evaluation:
+    horizon_s: 20
+    target_event: red_light_interaction
+    tick_rate_hz: 10
+    success_criteria:
+    - scenario_realized
+    - no_collision
+  metrics:
+  - scenario_realized
+  - time_to_event
+  - collision
+  - near_collision
+algorithm:
+  name: laser
+  adapter:
+    _target_: scenario_orchestration.adapters.laser.LaserAdapter
+  repository: third_party/laser
+  entry_point: scenario_orchestration/run.py
+  execution:
+    interpreter: python
+    timeout_s: 1800
+  capabilities:
+    scenario_families:
+    - red_light
+    - cut_in
+    - lane_change
+    - overtake
+    - right_turn
+    - left_turn
+    policy_interfaces:
+    - ego_policy_v1
+    observation_spaces:
+    - sensor
+    - state
+    action_spaces:
+    - control
+    - waypoints
+    closed_loop: true
+  unsupported:
+    scenario_families: {}
+    observation_spaces: {}
+  requires:
+    submodule: true
+    entry_point: true
+    python_modules: []
+policy:
+  name: plant2
+  implementation: plant2.agent.PlanTAgent
+  interface: ego_policy_v1
+  observation_space: state
+  action_space: waypoints
+  repository: third_party/plant2
+  entry_point: scenario_orchestration/policy.py
+  description: Privileged-input transformer planner predicting ego waypoints.
+  checkpoint: third_party/plant2/checkpoints
+  parameters:
+    num_waypoints: 4
+  requires:
+  - submodule
+  - checkpoint
+  - torch
+  adapter:
+    _target_: scenario_orchestration.adapters.policy.LearnedPolicyAdapter
+tags:
+  experiment: laser_full

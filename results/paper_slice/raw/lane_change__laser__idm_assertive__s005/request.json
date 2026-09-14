@@ -1,0 +1,41 @@
+{
+  "schema_version": "1.0.0",
+  "experiment_id": "lane_change__laser__idm_assertive__s005",
+  "scenario_family": "lane_change",
+  "semantic_id": "lane_change",
+  "algorithm": "laser",
+  "seed": 5,
+  "evaluation": {
+    "horizon_s": 20,
+    "target_event": "lane_change_interaction",
+    "success_criteria": [
+      "scenario_realized",
+      "no_collision"
+    ],
+    "tick_rate_hz": 10
+  },
+  "implementation": {
+    "family": "lane_change",
+    "method": "laser",
+    "native_id": "laser_blocked_lane_change",
+    "parameters": {
+      "town": "Town04"
+    }
+  },
+  "metrics": [
+    "scenario_realized",
+    "time_to_event",
+    "collision",
+    "near_collision"
+  ],
+  "parameters": {
+    "target_interaction": "the ego vehicle is required to change lane into occupied traffic",
+    "preconditions": [
+      "ego_travels_in_multilane_road",
+      "ego_lane_blocked_ahead",
+      "target_lane_traffic_present"
+    ],
+    "description": "The ego vehicle must change lanes around a slow or stopped obstacle while traffic occupies the target lane."
+  },
+  "output_dir": "/scratch/visraj12/scenario_orchestration/results/raw/lane_change__laser__idm_assertive__s005"
+}

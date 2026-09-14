@@ -1,0 +1,22 @@
+{
+  "python_version": "3.8.10",
+  "python_executable": "/scratch/visraj12/LASER/.venv/bin/python3",
+  "platform": "Linux-6.8.0-136-generic-x86_64-with-glibc2.2.5",
+  "machine": "x86_64",
+  "processor": "",
+  "hostname": "kn063",
+  "prepared": {
+    "boundary": "process",
+    "timeout_s": 1800.0
+  },
+  "command": [
+    "/scratch/visraj12/LASER/.venv/bin/python3",
+    "/scratch/visraj12/scenario_orchestration/third_party/laser/scenario_orchestration/run.py",
+    "--scenario-request",
+    "/scratch/visraj12/scenario_orchestration/results/raw/red_light__laser__idm_conservative__s001/request.json",
+    "--policy-request",
+    "/scratch/visraj12/scenario_orchestration/results/raw/red_light__laser__idm_conservative__s001/policy.json",
+    "--output-dir",
+    "/scratch/visraj12/scenario_orchestration/results/raw/red_light__laser__idm_conservative__s001"
+  ]
+}

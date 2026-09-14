@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0.0",
+  "experiment_id": "red_light__laser__tfv6__s001",
+  "name": "tfv6",
+  "interface": "ego_policy_v1",
+  "implementation": "scenario_orchestration.policy.build_policy",
+  "observation_space": "sensor",
+  "action_space": "control",
+  "seed": 1,
+  "repository": "third_party/tfv6",
+  "entry_point": "scenario_orchestration/policy.py",
+  "checkpoint": "third_party/checkpoints/tfv6_cvpr2026/tfv6_resnet34",
+  "parameters": {
+    "device": "cuda:0",
+    "town": "Town10HD"
+  },
+  "requires": [
+    "submodule",
+    "checkpoint",
+    "torch",
+    "gpu"
+  ]
+}

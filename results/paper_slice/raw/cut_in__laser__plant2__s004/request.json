@@ -1,0 +1,40 @@
+{
+  "schema_version": "1.0.0",
+  "experiment_id": "cut_in__laser__plant2__s004",
+  "scenario_family": "cut_in",
+  "semantic_id": "cut_in",
+  "algorithm": "laser",
+  "seed": 4,
+  "evaluation": {
+    "horizon_s": 15,
+    "target_event": "cut_in_interaction",
+    "success_criteria": [
+      "scenario_realized",
+      "no_collision"
+    ],
+    "tick_rate_hz": 10
+  },
+  "implementation": {
+    "family": "cut_in",
+    "method": "laser",
+    "native_id": "laser_adjacent_cut_in",
+    "parameters": {
+      "town": "Town04"
+    }
+  },
+  "metrics": [
+    "scenario_realized",
+    "time_to_event",
+    "collision",
+    "near_collision"
+  ],
+  "parameters": {
+    "target_interaction": "an adjacent actor cuts into the ego lane inside the ego safety envelope",
+    "preconditions": [
+      "ego_travels_in_multilane_road",
+      "adjacent_lane_actor_present"
+    ],
+    "description": "An actor travelling in an adjacent lane cuts into the ego lane at close longitudinal range, forcing the ego vehicle to react."
+  },
+  "output_dir": "/scratch/visraj12/scenario_orchestration/results/raw/cut_in__laser__plant2__s004"
+}

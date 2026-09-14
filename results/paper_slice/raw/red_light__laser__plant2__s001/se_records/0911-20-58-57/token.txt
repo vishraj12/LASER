@@ -1,0 +1,8 @@
+{
+    "SW": null,
+    "red_light_runner": {
+        "input_tokens": 34364,
+        "output_tokens": 8090,
+        "total_tokens": 42454
+    }
+}

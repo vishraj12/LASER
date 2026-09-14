@@ -1,0 +1,8 @@
+{
+    "SW": null,
+    "oncoming_straight": {
+        "input_tokens": 31380,
+        "output_tokens": 7329,
+        "total_tokens": 38709
+    }
+}

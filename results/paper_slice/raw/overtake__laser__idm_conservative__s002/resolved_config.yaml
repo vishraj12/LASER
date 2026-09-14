@@ -1,0 +1,89 @@
+experiment_id: overtake__laser__idm_conservative__s002
+spec:
+  schema_version: 1.0.0
+  experiment_id: overtake__laser__idm_conservative__s002
+  scenario_family: overtake
+  algorithm: laser
+  policy: idm_conservative
+  seed: 2
+  scenario_config: /scratch/visraj12/scenario_orchestration/configs/scenario/overtake.yaml
+  algorithm_config: /scratch/visraj12/scenario_orchestration/configs/algorithm/laser.yaml
+  policy_config: /scratch/visraj12/scenario_orchestration/configs/policy/idm_conservative.yaml
+  output_dir: /scratch/visraj12/scenario_orchestration/results/raw/overtake__laser__idm_conservative__s002
+  tags:
+    experiment: laser_full
+scenario:
+  name: overtake
+  semantic_id: overtake
+  description: The ego vehicle overtakes a slow lead vehicle on a two-way road while
+    oncoming traffic constrains the manoeuvre window.
+  preconditions:
+  - ego_travels_behind_slow_lead_vehicle
+  - opposing_lane_available
+  - oncoming_actor_present
+  target_interaction: the ego overtake manoeuvre interacts with oncoming traffic
+  evaluation:
+    horizon_s: 25
+    target_event: overtake_interaction
+    tick_rate_hz: 10
+    success_criteria:
+    - scenario_realized
+    - no_collision
+  metrics:
+  - scenario_realized
+  - time_to_event
+  - collision
+  - near_collision
+algorithm:
+  name: laser
+  adapter:
+    _target_: scenario_orchestration.adapters.laser.LaserAdapter
+  repository: third_party/laser
+  entry_point: scenario_orchestration/run.py
+  execution:
+    interpreter: python
+    timeout_s: 1800
+  capabilities:
+    scenario_families:
+    - red_light
+    - cut_in
+    - lane_change
+    - overtake
+    - right_turn
+    - left_turn
+    policy_interfaces:
+    - ego_policy_v1
+    observation_spaces:
+    - sensor
+    - state
+    action_spaces:
+    - control
+    - waypoints
+    closed_loop: true
+  unsupported:
+    scenario_families: {}
+    observation_spaces: {}
+  requires:
+    submodule: true
+    entry_point: true
+    python_modules: []
+policy:
+  name: idm_conservative
+  implementation: idm.policy.IDMPolicy
+  interface: ego_policy_v1
+  observation_space: state
+  action_space: control
+  repository: third_party/idm
+  entry_point: scenario_orchestration/policy.py
+  description: IDM with a larger headway and gentler acceleration.
+  parameters:
+    desired_speed_mps: 6.0
+    time_headway_s: 2.5
+    min_gap_m: 4.0
+    max_accel_mps2: 1.0
+    comfort_decel_mps2: 1.5
+  adapter:
+    _target_: scenario_orchestration.adapters.policy.PolicyAdapter
+  requires: []
+tags:
+  experiment: laser_full

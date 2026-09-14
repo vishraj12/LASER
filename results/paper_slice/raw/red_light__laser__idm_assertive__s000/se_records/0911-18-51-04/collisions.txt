@@ -1,0 +1,1 @@
+35.28976640757173, Actor(id=223, type=vehicle.tesla.model3), Actor(id=0, type=static.motorcycle)

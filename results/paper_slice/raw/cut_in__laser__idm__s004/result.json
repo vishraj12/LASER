@@ -1,0 +1,129 @@
+{
+  "schema_version": "1.0.0",
+  "experiment_id": "cut_in__laser__idm__s004",
+  "status": "success",
+  "scenario_family": "cut_in",
+  "algorithm": "laser",
+  "policy": "idm",
+  "seed": 4,
+  "metrics": {
+    "scenario_success": true,
+    "scenario_realized": true,
+    "collision": false,
+    "scenario_duration": 14.95000022277236
+  },
+  "method_metrics": {
+    "command": [
+      "/home/visraj12/scratch/LASER/.venv/bin/python",
+      "/scratch/visraj12/scenario_orchestration/third_party/laser/laser_se.py",
+      "-r",
+      "T04CutIn",
+      "-s",
+      "/scratch/visraj12/scenario_orchestration/third_party/laser/laser_scenes/Cut-in/script.json",
+      "-t",
+      "15",
+      "--host",
+      "127.0.0.1",
+      "-p",
+      "2000"
+    ],
+    "evaluation_horizon_s": 15,
+    "experiment_id": "cut_in__laser__idm__s004",
+    "log_path": "laser.log",
+    "observation_space_note": "state",
+    "policy_mode": "native",
+    "policy_requested": "idm",
+    "policy_resolved": "idm",
+    "requested_native_id": "laser_adjacent_cut_in",
+    "requested_parameters": {
+      "town": "Town04"
+    },
+    "returncode": 0,
+    "road": "T04CutIn",
+    "scenario_family_resolved": "cut_in",
+    "script": "laser_scenes/Cut-in/script.json",
+    "se_record_dir": "se_records/0912-16-06-01",
+    "seed": 4,
+    "sim_duration_s": 15.0,
+    "timeout_s": 900.0,
+    "token_usage": {
+      "SW": null,
+      "overtaking_car": {
+        "input_tokens": 27750,
+        "output_tokens": 6581,
+        "total_tokens": 34331
+      }
+    },
+    "wall_time_s": 94.922
+  },
+  "trace_path": null,
+  "wall_time_s": 95.07022113632411,
+  "cpu_time_s": 5.914788000000044,
+  "git_revisions": {
+    "central": {
+      "commit": "2b43e37b78c1049205239451bec0ba5953f06e8f",
+      "dirty": true,
+      "path": "/scratch/visraj12/scenario_orchestration"
+    },
+    "submodules": {
+      "fuzzed_execution": {
+        "initialized": false,
+        "commit": null,
+        "dirty": null
+      },
+      "idm": {
+        "initialized": false,
+        "commit": null,
+        "dirty": null
+      },
+      "laser": {
+        "initialized": true,
+        "commit": "aedd0a2f22aa5414ad0aed9d2c598de931d3e7b6",
+        "dirty": true
+      },
+      "orchestration": {
+        "initialized": true,
+        "commit": "bea81503da5dea5ffaa2a8d239c9856913c69fd4",
+        "dirty": false
+      },
+      "orchestrator_highway": {
+        "initialized": false,
+        "commit": null,
+        "dirty": null
+      },
+      "osc2runner": {
+        "initialized": false,
+        "commit": null,
+        "dirty": null
+      },
+      "plant2": {
+        "initialized": true,
+        "commit": "85961c03db8528b02019840affb5c3b130fb3d1b",
+        "dirty": true
+      },
+      "prosim": {
+        "initialized": false,
+        "commit": null,
+        "dirty": null
+      },
+      "simlingo": {
+        "initialized": true,
+        "commit": "6f89208f905ac85685b0869e633fd3e0023c9c5b",
+        "dirty": true
+      },
+      "tfv6": {
+        "initialized": true,
+        "commit": "bfe14ceaffa340f5af36448c4da0b1640ea34dec",
+        "dirty": true
+      },
+      "transfuser": {
+        "initialized": false,
+        "commit": null,
+        "dirty": null
+      }
+    }
+  },
+  "reason": null,
+  "timestamp": "2026-09-12T20:05:36+00:00",
+  "artifacts": {}
+}

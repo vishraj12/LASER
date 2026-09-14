@@ -1,0 +1,61 @@
+{
+  "method_metrics": {
+    "command": [
+      "/home/visraj12/scratch/LASER/.venv/bin/python",
+      "/scratch/visraj12/scenario_orchestration/third_party/laser/laser_se.py",
+      "-r",
+      "T04HardBrake",
+      "-s",
+      "/scratch/visraj12/scenario_orchestration/third_party/laser/laser_scenes/LaneChanging/script.json",
+      "-t",
+      "20",
+      "--host",
+      "127.0.0.1",
+      "-p",
+      "2000"
+    ],
+    "evaluation_horizon_s": 20,
+    "experiment_id": "lane_change__laser__idm_assertive__s001",
+    "idm_mobil": true,
+    "log_path": "laser.log",
+    "observation_space_note": "state",
+    "policy_mode": "native",
+    "policy_requested": "idm_assertive",
+    "policy_resolved": "idm",
+    "requested_native_id": "laser_blocked_lane_change",
+    "requested_parameters": {
+      "town": "Town04"
+    },
+    "returncode": 0,
+    "road": "T04HardBrake",
+    "scenario_family_resolved": "lane_change",
+    "script": "laser_scenes/LaneChanging/script.json",
+    "se_record_dir": "se_records/0911-20-53-09",
+    "seed": 1,
+    "sim_duration_s": 20.0,
+    "timeout_s": 900.0,
+    "token_usage": {
+      "SW": null,
+      "adjacent_lane_vehicle": {
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "total_tokens": 0
+      },
+      "slow_leading_vehicle": {
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "total_tokens": 0
+      }
+    },
+    "wall_time_s": 17.242
+  },
+  "metrics": {
+    "collision": false,
+    "scenario_duration": 19.950000297278166,
+    "scenario_realized": true,
+    "scenario_success": true
+  },
+  "reason": null,
+  "status": "success",
+  "trace_path": null
+}

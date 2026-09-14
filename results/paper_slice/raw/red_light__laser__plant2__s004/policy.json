@@ -1,0 +1,21 @@
+{
+  "schema_version": "1.0.0",
+  "experiment_id": "red_light__laser__plant2__s004",
+  "name": "plant2",
+  "interface": "ego_policy_v1",
+  "implementation": "plant2.agent.PlanTAgent",
+  "observation_space": "state",
+  "action_space": "waypoints",
+  "seed": 4,
+  "repository": "third_party/plant2",
+  "entry_point": "scenario_orchestration/policy.py",
+  "checkpoint": "third_party/plant2/checkpoints",
+  "parameters": {
+    "num_waypoints": 4
+  },
+  "requires": [
+    "submodule",
+    "checkpoint",
+    "torch"
+  ]
+}

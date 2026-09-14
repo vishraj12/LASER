@@ -1,0 +1,55 @@
+{
+  "experiment_id": "left_turn__laser__idm_assertive__s001",
+  "status": "success",
+  "metrics": {
+    "scenario_success": true,
+    "scenario_realized": true,
+    "collision": false,
+    "scenario_duration": 19.950000297278166
+  },
+  "method_metrics": {
+    "command": [
+      "/home/visraj12/scratch/LASER/.venv/bin/python",
+      "/scratch/visraj12/scenario_orchestration/third_party/laser/laser_se.py",
+      "-r",
+      "T10J189Left",
+      "-s",
+      "/scratch/visraj12/scenario_orchestration/third_party/laser/laser_scenes/UnprotectedLeftTurn/script.json",
+      "-t",
+      "20",
+      "--host",
+      "127.0.0.1",
+      "-p",
+      "2000"
+    ],
+    "evaluation_horizon_s": 20,
+    "experiment_id": "left_turn__laser__idm_assertive__s001",
+    "log_path": "laser.log",
+    "observation_space_note": "state",
+    "policy_mode": "native",
+    "policy_requested": "idm_assertive",
+    "policy_resolved": "idm",
+    "requested_native_id": "laser_unprotected_left",
+    "requested_parameters": {
+      "road": "T10J189Left",
+      "town": "Town10HD_Opt"
+    },
+    "returncode": 0,
+    "road": "T10J189Left",
+    "scenario_family_resolved": "left_turn",
+    "script": "laser_scenes/UnprotectedLeftTurn/script.json",
+    "se_record_dir": "se_records/0911-19-20-12",
+    "seed": 1,
+    "sim_duration_s": 20.0,
+    "timeout_s": 900.0,
+    "token_usage": {
+      "SW": null,
+      "oncoming_straight": {
+        "input_tokens": 24279,
+        "output_tokens": 5523,
+        "total_tokens": 29802
+      }
+    },
+    "wall_time_s": 88.052
+  }
+}

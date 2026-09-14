@@ -1,0 +1,13 @@
+{
+    "SW": null,
+    "slow_leading_vehicle": {
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "total_tokens": 0
+    },
+    "adjacent_lane_vehicle": {
+        "input_tokens": 0,
+        "output_tokens": 0,
+        "total_tokens": 0
+    }
+}

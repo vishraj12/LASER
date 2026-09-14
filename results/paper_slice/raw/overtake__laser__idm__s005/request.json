@@ -1,0 +1,42 @@
+{
+  "schema_version": "1.0.0",
+  "experiment_id": "overtake__laser__idm__s005",
+  "scenario_family": "overtake",
+  "semantic_id": "overtake",
+  "algorithm": "laser",
+  "seed": 5,
+  "evaluation": {
+    "horizon_s": 25,
+    "target_event": "overtake_interaction",
+    "success_criteria": [
+      "scenario_realized",
+      "no_collision"
+    ],
+    "tick_rate_hz": 10
+  },
+  "implementation": {
+    "family": "overtake",
+    "method": "laser",
+    "native_id": "vehicle_passing",
+    "parameters": {
+      "town": "Town04",
+      "road": "T04VehiclePassing"
+    }
+  },
+  "metrics": [
+    "scenario_realized",
+    "time_to_event",
+    "collision",
+    "near_collision"
+  ],
+  "parameters": {
+    "target_interaction": "the ego overtake manoeuvre interacts with oncoming traffic",
+    "preconditions": [
+      "ego_travels_behind_slow_lead_vehicle",
+      "opposing_lane_available",
+      "oncoming_actor_present"
+    ],
+    "description": "The ego vehicle overtakes a slow lead vehicle on a two-way road while oncoming traffic constrains the manoeuvre window."
+  },
+  "output_dir": "/scratch/visraj12/scenario_orchestration/results/raw/overtake__laser__idm__s005"
+}

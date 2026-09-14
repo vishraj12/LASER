@@ -1,0 +1,54 @@
+{
+  "experiment_id": "cut_in__laser__plant2__s001",
+  "status": "success",
+  "metrics": {
+    "scenario_success": true,
+    "scenario_realized": true,
+    "collision": false,
+    "scenario_duration": 14.95000022277236
+  },
+  "method_metrics": {
+    "command": [
+      "/home/visraj12/scratch/LASER/.venv/bin/python",
+      "/scratch/visraj12/scenario_orchestration/third_party/laser/laser_se.py",
+      "-r",
+      "T04CutIn",
+      "-s",
+      "/scratch/visraj12/scenario_orchestration/third_party/laser/laser_scenes/Cut-in/script.json",
+      "-t",
+      "15",
+      "--host",
+      "127.0.0.1",
+      "-p",
+      "2000"
+    ],
+    "evaluation_horizon_s": 15,
+    "experiment_id": "cut_in__laser__plant2__s001",
+    "log_path": "laser.log",
+    "observation_space_note": "state",
+    "policy_mode": "native",
+    "policy_requested": "plant2",
+    "policy_resolved": "plant2",
+    "requested_native_id": "laser_adjacent_cut_in",
+    "requested_parameters": {
+      "town": "Town04"
+    },
+    "returncode": 0,
+    "road": "T04CutIn",
+    "scenario_family_resolved": "cut_in",
+    "script": "laser_scenes/Cut-in/script.json",
+    "se_record_dir": "se_records/0912-13-42-33",
+    "seed": 1,
+    "sim_duration_s": 15.0,
+    "timeout_s": 900.0,
+    "token_usage": {
+      "SW": null,
+      "overtaking_car": {
+        "input_tokens": 26734,
+        "output_tokens": 6951,
+        "total_tokens": 33685
+      }
+    },
+    "wall_time_s": 107.126
+  }
+}

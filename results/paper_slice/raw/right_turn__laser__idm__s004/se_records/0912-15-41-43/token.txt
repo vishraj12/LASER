@@ -1,0 +1,8 @@
+{
+    "SW": null,
+    "crossing_vehicle": {
+        "input_tokens": 29388,
+        "output_tokens": 6761,
+        "total_tokens": 36149
+    }
+}
