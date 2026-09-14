@@ -164,8 +164,30 @@ OBSERVATION_SPACE = "state"
 ACTION_SPACE = "waypoints"
 SCHEMA_VERSION = "1.0.0"
 
-#: This repository's root, i.e. the parent of ``scenario_orchestration/``.
-REPO_ROOT = Path(__file__).resolve().parent.parent
+def _plant2_repo_root() -> Path:
+    """The plant2 checkout this policy drives.
+
+    Upstream this file sits at ``<plant2>/scenario_orchestration/policy.py`` and
+    the root is its grandparent. Vendored as a LASER overlay it sits at
+    ``<laser>/scenario_orchestration/overlays/plant2/scenario_orchestration/``,
+    where the grandparent is the overlay directory: ``_prepare_sys_path`` then
+    orders two directories that do not exist, ``carla_garage`` stays ahead of
+    ``PlanT``, and ``from model import HFLM`` loads carla_garage's ``model.py``.
+    ``PLANT2_ROOT`` (run.py exports it) wins, then the stock location, then the
+    harness layout's sibling checkout.
+    """
+    env = os.environ.get("PLANT2_ROOT")
+    if env:
+        return Path(env).expanduser().resolve()
+    here = Path(__file__).resolve().parent.parent
+    if (here / "PlanT").is_dir():
+        return here
+    sibling = here.parents[3] / "plant2"          # <laser>/../plant2
+    return sibling if (sibling / "PlanT").is_dir() else here
+
+
+#: The plant2 repository's root (see ``_plant2_repo_root``).
+REPO_ROOT = _plant2_repo_root()
 
 #: Where the released checkpoints live once they have been pulled from
 #: https://huggingface.co/SimonGer/PlanT2
