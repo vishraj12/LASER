@@ -733,8 +733,24 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
             output_dir, "failure", method_metrics=context, reason=str(exc)
         )
 
+    # The harness's own policy, through the same driver the other methods use
+    # (laser/target_vehicle/harness_policy_ego.py). LASER_NATIVE_EGOS=1 keeps
+    # LASER's own re-implementations instead.
+    native = (_env("LASER_NATIVE_EGOS") or "0").lower() not in ("0", "false", "no", "off")
+    if not native and policy_env.get("LASER_EGO") in ("idm", "plant2", "tfv6", "simlingo"):
+        policy_env["LASER_POLICY_REQUEST"] = os.path.abspath(args.policy_request)
+        policy_env.setdefault(
+            "LASER_HARNESS_ROOT", os.path.dirname(os.path.dirname(REPO_ROOT)))
+        policy_notes = dict(policy_notes)
+        policy_notes["policy_mode"] = "harness_policy"
+        policy_notes["policy_repository"] = policy_request.get("repository")
+        policy_notes["policy_entry_point"] = policy_request.get("entry_point")
+
     # IDM+MOBIL only for Merge (lane_change) and Overtake — not cut-in / turns.
-    if policy_env.get("LASER_EGO") == "idm" and family in ("lane_change", "overtake"):
+    # Native egos only: under the harness policy `idm` keeps its lane and
+    # `idm_mobil` changes lanes, as in every other method.
+    if (native and policy_env.get("LASER_EGO") == "idm"
+            and family in ("lane_change", "overtake")):
         policy_env["IDM_ENABLE_MOBIL"] = "1"
         policy_notes = dict(policy_notes)
         policy_notes["idm_mobil"] = True

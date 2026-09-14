@@ -252,7 +252,19 @@ class TargetVehicle(Agent):
         if debug_mode:
             self._draw_waypoints(world, self.route, vertical_shift=1.0, persistency=50000.0)
 
-        if ego == "idm":
+        self._harness_ego = None
+        policy_request = os.environ.get("LASER_POLICY_REQUEST")
+        if policy_request:
+            # The harness's own policy request: the same policy repository and the
+            # same method-side driver the other methods use, instead of LASER's
+            # native re-implementations below (see harness_policy_ego.py).
+            from laser.target_vehicle.harness_policy_ego import HarnessPolicyEgo
+
+            self._harness_ego = HarnessPolicyEgo(
+                self.carla_actor, self.route, policy_request, agent_manager
+            )
+            self._ego_mode = "harness"
+        elif ego == "idm":
             from laser.target_vehicle.idm_ego import IDMEgoController, IDMParams
             mobil_lane_ids = {
                 wp.lane_id for wp in lane_wps[: max(1, agent_manager.driving_lane_num)]
@@ -317,7 +329,9 @@ class TargetVehicle(Agent):
         pass
 
     def on_tick(self, dt):
-        if self._ego_mode == "idm":
+        if self._ego_mode == "harness":
+            ego_action = self._harness_ego.run_step(dt)
+        elif self._ego_mode == "idm":
             ego_action = self._idm_controller.run_step(dt)
         elif self._ego_mode == "plant2":
             ego_action = self._plant2_controller.run_step(dt)
@@ -418,6 +432,12 @@ class TargetVehicle(Agent):
         pass
 
     def destroy(self):
+        if self._harness_ego is not None:
+            try:
+                self._harness_ego.close()
+            except Exception as exc:  # noqa: BLE001
+                print(f"harness ego close failed: {exc}")
+            self._harness_ego = None
         if self._tfv6_controller is not None:
             try:
                 self._tfv6_controller.close()
