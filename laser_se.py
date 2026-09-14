@@ -84,10 +84,13 @@ def setup_junction189_lights(world, ego_wp, cross_wp):
 
 
 def setup_junction189_right_lights(world, ego_wp, cross_wp):
-    """Figure-matched right-turn lights: ego approach RED, through/cross GREEN.
+    """Right-turn lights: ego approach GREEN, crossing approach RED.
 
-    Same TL lookup as red-light, inverted colours — ego turns right from the
-    south arm into eastbound traffic that already has the green.
+    The intersection method stages every junction family under one signal plan
+    (orchestration/carla_port/scenarios.py: the ego's N/S arms green, E/W red),
+    so its right-turning ego has the green and the crossing actor runs a red.
+    This mode used to give the ego the red, which a light-obeying ego policy
+    (SimLingo, TFv6, PlanT2) answers by stopping at the line and never turning.
     """
     def best_light_for_approach(approach_wp):
         best = None
@@ -117,14 +120,14 @@ def setup_junction189_right_lights(world, ego_wp, cross_wp):
         tl.set_state(carla.TrafficLightState.Red)
 
     if ego_light is not None:
-        ego_light.set_state(carla.TrafficLightState.Red)
-        print(f"T10J189Right lights: ego approach TL {ego_light.id} → Red")
+        ego_light.set_state(carla.TrafficLightState.Green)
+        print(f"T10J189Right lights: ego approach TL {ego_light.id} → Green")
     else:
         print("WARN T10J189Right: could not find ego approach traffic light")
 
     if cross_light is not None:
-        cross_light.set_state(carla.TrafficLightState.Green)
-        print(f"T10J189Right lights: cross approach TL {cross_light.id} → Green")
+        cross_light.set_state(carla.TrafficLightState.Red)
+        print(f"T10J189Right lights: cross approach TL {cross_light.id} → Red")
     else:
         print("WARN T10J189Right: could not find cross approach traffic light")
 
