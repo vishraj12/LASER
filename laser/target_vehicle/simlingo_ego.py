@@ -158,29 +158,51 @@ class SimLingoEgoController:
             self._sensors.append(sensor)
 
     def _target_points_ego(self) -> List[List[float]]:
-        """Near/far route targets in ego frame (SimLingo expects two points)."""
+        """The shared route in SimLingo's ego frame, as the harness sends it.
+
+        `scenario_orchestration/policy.py :: _target_points` in the simlingo
+        checkout reads ``observation["route"]`` as the harness polyline -- one
+        point per metre of route from 2.5 m ahead, twenty of them -- and
+        conditions on point 7 (~9.5 m) and the last (~21.5 m). Sending only a
+        near and a far point made both of its targets the far one. Sampled by
+        arc length exactly like ``tfv6_ego`` / ``plant2_ego``, so all three
+        LASER egos see the same route.
+        """
         ego_xy = [self.vehicle.get_location().x, self.vehicle.get_location().y]
         yaw = math.radians(self.vehicle.get_transform().rotation.yaw)
         world_pts = [
             [float(t.location.x), float(t.location.y)] for t, _opt in self.route
         ]
         if not world_pts:
-            return [[10.0, 0.0], [20.0, 0.0]]
-        # pick points ~10 m and ~20 m ahead along remaining route
-        best_near, best_far = None, None
-        for pt in world_pts:
-            local = _world_to_ego_2d(pt, ego_xy, yaw)
-            if local[0] < 2.0:
-                continue
-            if best_near is None or abs(local[0] - 10.0) < abs(best_near[0] - 10.0):
-                best_near = local
-            if best_far is None or abs(local[0] - 20.0) < abs(best_far[0] - 20.0):
-                best_far = local
-        if best_near is None:
-            best_near = [10.0, 0.0]
-        if best_far is None:
-            best_far = [best_near[0] + 10.0, best_near[1]]
-        return [best_near, best_far]
+            return [[2.5 + i, 0.0] for i in range(20)]
+        start = min(
+            range(len(world_pts)),
+            key=lambda i: (world_pts[i][0] - ego_xy[0]) ** 2
+            + (world_pts[i][1] - ego_xy[1]) ** 2,
+        )
+        sampled: List[List[float]] = []
+        distance = 0.0
+        next_sample = 2.5
+        previous = ego_xy
+        for point in world_pts[start:]:
+            distance += math.hypot(point[0] - previous[0], point[1] - previous[1])
+            previous = point
+            if distance >= next_sample:
+                sampled.append(_world_to_ego_2d(point, ego_xy, yaw))
+                next_sample += 1.0
+            if len(sampled) >= 20:
+                break
+        while len(sampled) < 20:
+            last = sampled[-1] if sampled else [2.5, 0.0]
+            if len(sampled) >= 2:
+                dx = sampled[-1][0] - sampled[-2][0]
+                dy = sampled[-1][1] - sampled[-2][1]
+                norm = max(math.hypot(dx, dy), 1e-6)
+                step = [dx / norm, dy / norm]
+            else:
+                step = [1.0, 0.0]
+            sampled.append([last[0] + step[0], last[1] + step[1]])
+        return sampled[:20]
 
     def _observation(self) -> Dict[str, Any]:
         cameras: Dict[str, Any] = {}
