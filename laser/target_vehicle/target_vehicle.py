@@ -106,6 +106,42 @@ def ego_route_end_location(world, start_wp, distance, maneuver="straight"):
     return probe
 
 
+#: The route is extended until it could not run out within the horizon at this
+#: speed. Stock LASER plans only 50 m past the scene anchor, which a 10 m/s ego
+#: passes mid-episode; from then on a route-conditioned policy is either handed a
+#: short route or points LASER invented, which no other method gives it.
+ROUTE_COVER_SPEED_MPS = 20.0
+
+
+def extend_route(carla_map, route, extra_m, step_m=1.0):
+    """Continue ``route`` along the road past its end by ``extra_m`` metres,
+    taking the straight-most successor at each fork."""
+    if not route or extra_m <= 0:
+        return list(route)
+    wp = carla_map.get_waypoint(
+        route[-1][0].location, project_to_road=True, lane_type=carla.LaneType.Driving
+    )
+    if wp is None:
+        return list(route)
+    out = list(route)
+    walked = 0.0
+    while walked < extra_m:
+        successors = wp.next(step_m)
+        if not successors:
+            break
+        yaw = wp.transform.rotation.yaw
+        wp = min(successors, key=lambda w: _yaw_delta_deg(w.transform.rotation.yaw, yaw))
+        out.append((wp.transform, RoadOption.LANEFOLLOW))
+        walked += step_m
+    return out
+
+
+def route_length(route):
+    return sum(
+        a[0].location.distance(b[0].location) for a, b in zip(route[:-1], route[1:])
+    )
+
+
 class TargetVehicle(Agent):
     def __init__(self, world, agent_name, agent_script, lane_wps, agent_manager, queue) -> None:
         self.name = agent_name
@@ -189,6 +225,17 @@ class TargetVehicle(Agent):
 
         gps_route, self.route = interpolate_trajectory(
             world, [wp.transform.location, end_loc], hop_resolution=1.0
+        )
+        horizon_s = float(getattr(agent_manager, "simulation_time", 0) or 0)
+        cover_m = horizon_s * float(
+            os.environ.get("LASER_ROUTE_COVER_SPEED_MPS", ROUTE_COVER_SPEED_MPS)
+        )
+        planned_m = route_length(self.route)
+        if cover_m > planned_m:
+            self.route = extend_route(world.get_map(), self.route, cover_m - planned_m)
+        print(
+            f"VUT route {planned_m:.0f} m planned, {route_length(self.route):.0f} m "
+            f"after extension to cover {horizon_s:g} s"
         )
         CarlaDataProvider.set_ego_route(convert_transform_to_location(self.route))
 
