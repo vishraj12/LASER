@@ -74,6 +74,8 @@ NATIVE_POLICY_NAMES = {
     "idm_assertive": "idm",
     "idm_highway": "idm",
     "idm_mobil": "idm",
+    "idm_mobil_assertive": "idm",
+    "idm_mobil_conservative": "idm",
     "laser_idm": "idm",
     "tfv6": "tfv6",
     "transfuser_v6": "tfv6",
@@ -359,9 +361,9 @@ def build_policy_plan(policy_request: Dict[str, Any]) -> Tuple[Dict[str, str], D
         for src, dst in mapping.items():
             if src in parameters and parameters[src] is not None:
                 env[dst] = str(parameters[src])
-        # idm_mobil is a named policy (always MOBIL on). Other IDM names still
-        # get MOBIL auto-enabled only for lane_change / overtake in main().
-        if name == "idm_mobil":
+        # The idm_mobil* names are named policies (always MOBIL on). Other IDM
+        # names still get MOBIL auto-enabled only for lane_change / overtake in main().
+        if name in ("idm_mobil", "idm_mobil_assertive", "idm_mobil_conservative"):
             env["IDM_ENABLE_MOBIL"] = "1"
             if "lane_width_m" in parameters and parameters["lane_width_m"] is not None:
                 # LASER IDM uses half-width for corridor checks.
