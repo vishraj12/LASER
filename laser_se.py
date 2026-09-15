@@ -39,9 +39,41 @@ def find_opposite_driving_wp(wp):
     return None
 
 
+def hold_light_states(world, states, tries=5):
+    """Freeze every light and set `states` ({light id: (light, state)}) so they take.
+
+    This runs straight after load_world, while the world is asynchronous and the
+    town's own light cycle still runs: a state set before the new episode's first
+    tick can be overwritten by that cycle and then frozen. With
+    setup_junction189_lights' old order on CARLA 0.9.16 the ego's green was lost
+    in 4 of 8 loads of Town10HD_Opt (every light of junction 189 red for the whole
+    run; 3 of 7 replays and one red-light run), and held in all 6 that waited one
+    tick first. So: wait for a tick, freeze, set, wait for the next tick, read
+    the states back, and set them again if any did not take. Staged this way the
+    ego's green held in 6 of 6 loads.
+    """
+    def next_tick():
+        if world.get_settings().synchronous_mode:
+            world.tick()
+        else:
+            world.wait_for_tick()
+
+    next_tick()
+    world.freeze_all_traffic_lights(True)
+    for _ in range(tries):
+        for tl, state in states.values():
+            tl.set_state(state)
+        next_tick()
+        missed = [tid for tid, (tl, state) in states.items() if tl.get_state() != state]
+        if not missed:
+            return True
+        print(f"WARN lights: {missed} did not take; setting them again")
+    print(f"WARN lights: {missed} still not as set after {tries} tries")
+    return False
+
+
 def setup_junction189_lights(world, ego_wp, cross_wp):
     """Freeze lights: ego approach green, crossing approach red (SafeBench red-light)."""
-    world.freeze_all_traffic_lights(True)
 
     def best_light_for_approach(approach_wp, max_dist=40.0):
         best = None
@@ -67,20 +99,20 @@ def setup_junction189_lights(world, ego_wp, cross_wp):
     ego_light = best_light_for_approach(ego_wp)
     cross_light = best_light_for_approach(cross_wp)
 
-    for tl in world.get_actors().filter('traffic.traffic_light*'):
-        tl.set_state(carla.TrafficLightState.Red)
-
+    states = {tl.id: (tl, carla.TrafficLightState.Red)
+              for tl in world.get_actors().filter('traffic.traffic_light*')}
     if ego_light is not None:
-        ego_light.set_state(carla.TrafficLightState.Green)
+        states[ego_light.id] = (ego_light, carla.TrafficLightState.Green)
         print(f"T10J189 lights: ego approach TL {ego_light.id} → Green")
     else:
         print("WARN T10J189: could not find ego approach traffic light")
 
     if cross_light is not None:
-        cross_light.set_state(carla.TrafficLightState.Red)
+        states[cross_light.id] = (cross_light, carla.TrafficLightState.Red)
         print(f"T10J189 lights: cross approach TL {cross_light.id} → Red")
     else:
         print("WARN T10J189: could not find cross approach traffic light")
+    hold_light_states(world, states)
 
 
 def setup_junction189_right_lights(world, ego_wp, cross_wp):
@@ -115,21 +147,20 @@ def setup_junction189_right_lights(world, ego_wp, cross_wp):
     ego_light = best_light_for_approach(ego_wp)
     cross_light = best_light_for_approach(cross_wp)
 
-    world.freeze_all_traffic_lights(True)
-    for tl in world.get_actors().filter('traffic.traffic_light*'):
-        tl.set_state(carla.TrafficLightState.Red)
-
+    states = {tl.id: (tl, carla.TrafficLightState.Red)
+              for tl in world.get_actors().filter('traffic.traffic_light*')}
     if ego_light is not None:
-        ego_light.set_state(carla.TrafficLightState.Green)
+        states[ego_light.id] = (ego_light, carla.TrafficLightState.Green)
         print(f"T10J189Right lights: ego approach TL {ego_light.id} → Green")
     else:
         print("WARN T10J189Right: could not find ego approach traffic light")
 
     if cross_light is not None:
-        cross_light.set_state(carla.TrafficLightState.Red)
+        states[cross_light.id] = (cross_light, carla.TrafficLightState.Red)
         print(f"T10J189Right lights: cross approach TL {cross_light.id} → Red")
     else:
         print("WARN T10J189Right: could not find cross approach traffic light")
+    hold_light_states(world, states)
 
 
 def init_world():
@@ -345,9 +376,9 @@ def init_world():
               f"loc=({oncoming_approach.transform.location.x:.1f},{oncoming_approach.transform.location.y:.1f})")
         lane_wps = [ego_approach, oncoming_approach]
         driving_lane_num = 2
-        carla_world.freeze_all_traffic_lights(True)
-        for tl in carla_world.get_actors().filter('traffic.traffic_light*'):
-            tl.set_state(carla.TrafficLightState.Green)
+        hold_light_states(carla_world, {
+            tl.id: (tl, carla.TrafficLightState.Green)
+            for tl in carla_world.get_actors().filter('traffic.traffic_light*')})
         print("T10J189Left lights: all frozen Green (unprotected left + oncoming through)")
     elif args.road == 'T05Urban':
         carla_world = client.load_world("Town05")
